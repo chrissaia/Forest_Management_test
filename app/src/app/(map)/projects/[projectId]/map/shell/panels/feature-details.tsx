@@ -5,37 +5,57 @@
  * The sidebar frame mounts this only while a feature is selected.
  */
 
+import { ParagraphField } from "@/app/components/texts/paragraph-field";
+import type { TextFieldChange } from "@/app/components/texts/text-field-change";
 import { useMap } from "../../map-context";
 import { FeatureName } from "../feature-name";
 import { polygonAcres } from "../polygon-acres";
 
 // Name and acreage for the selected polygon.
 export function FeatureDetails() {
-  const { features, selectedFeature } = useMap();
+  const { features, selectedFeature, describeFeature } = useMap();
   if (selectedFeature === null) return null;
 
   const feature = features.find((item) => String(item.id) === selectedFeature);
   const featureName = typeof feature?.properties.name === "string" ? feature.properties.name : "";
+  const description =
+    typeof feature?.properties.description === "string" ? feature.properties.description : "";
   const acres = polygonAcres(feature);
 
   return (
-    <div className="flex w-full shrink-0 items-center gap-1 border-b border-surface-translucent-placeholder p-2">
-      <div className="min-w-0 flex-1">
-        <FeatureName
-          key={selectedFeature}
-          id={selectedFeature}
-          name={featureName}
-          features={features}
-          activate="click"
-        />
+    <div className="flex w-full shrink-0 flex-col border-b border-surface-translucent-placeholder p-2">
+      <div className="flex w-full items-center gap-1">
+        <div className="min-w-0 flex-1">
+          <FeatureName
+            key={selectedFeature}
+            id={selectedFeature}
+            name={featureName}
+            features={features}
+            activate="click"
+          />
+        </div>
+        {acres !== null ? (
+          <p className="template-body-small shrink-0 pr-2 text-text-secondary tabular-nums">
+            {acreageLabel(acres)}
+          </p>
+        ) : null}
       </div>
-      {acres !== null ? (
-        <p className="template-body-small shrink-0 pr-2 text-text-secondary tabular-nums">
-          {acreageLabel(acres)}
-        </p>
-      ) : null}
+      <ParagraphField
+        key={selectedFeature}
+        value={description}
+        onText={(change) => saveDescription(selectedFeature, change, describeFeature)}
+      />
     </div>
   );
+}
+
+// An empty description is stored as an empty string.
+function saveDescription(
+  id: string,
+  change: TextFieldChange,
+  describeFeature: (id: string, description: string) => void,
+) {
+  describeFeature(id, change.action === "delete" ? "" : change.text);
 }
 
 // One decimal and the unit, matching the header's secondary acreage.

@@ -36,7 +36,7 @@ function sketchFeatures(features: MapFeature[]) {
     type: "Feature" as const,
     id: feature.id,
     geometry: feature.geometry,
-    properties: { mode: "polygon", name: feature.name },
+    properties: { mode: "polygon", name: feature.name, description: feature.description },
   }));
 }
 

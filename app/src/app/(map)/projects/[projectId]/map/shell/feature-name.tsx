@@ -2,15 +2,14 @@
 
 /*
  * The editable feature name.
- * A click or a double-click turns it into a text field.
+ * A click uses the shared title. A double-click edits the list row.
  */
 
 import { useEffect, useRef, useState } from "react";
 import type { GeoJSONStoreFeatures } from "terra-draw";
+import { SentenceField } from "@/app/components/texts/sentence-field";
+import type { TextFieldChange } from "@/app/components/texts/text-field-change";
 import { useMap } from "../map-context";
-
-const nameClassName =
-  "template-body-medium w-fit min-w-full max-w-full cursor-text truncate rounded-[4px] px-2 py-1 text-left whitespace-nowrap text-text-primary";
 
 // Figma's layer rename: one 24px box. A transparent border keeps the text still.
 const sidebarNameClassName =
@@ -29,20 +28,49 @@ export function FeatureName({
   activate: "click" | "double-click";
 }) {
   const { renameFeature } = useMap();
+
+  // A blank or taken name stays as it is. Delete does not clear a feature name.
+  function onText(change: TextFieldChange) {
+    if (change.action === "delete") return;
+    const taken = nameTaken(features, id, change.text);
+    if (taken || change.text.toLowerCase() === name.toLowerCase()) return;
+    renameFeature(id, change.text);
+  }
+
+  if (activate === "click") {
+    return <SentenceField value={name} ariaLabel="Feature name" onText={onText} />;
+  }
+
+  return (
+    <ListFeatureName id={id} name={name} features={features} renameFeature={renameFeature} />
+  );
+}
+
+// The feature list row. A double-click turns the name into a text field.
+function ListFeatureName({
+  id,
+  name,
+  features,
+  renameFeature,
+}: {
+  id: string;
+  name: string;
+  features: GeoJSONStoreFeatures[];
+  renameFeature: (id: string, name: string) => void;
+}) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(name);
   const canceling = useRef(false);
   const fieldRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (activate !== "double-click" || !editing) return;
+    if (!editing) return;
     const field = fieldRef.current;
     if (!field) return;
     field.focus();
     field.select();
-  }, [activate, editing]);
+  }, [editing]);
 
-  // Turns the name into a text field and selects its text.
   function startEdit() {
     if (editing) return;
     canceling.current = false;
@@ -50,7 +78,6 @@ export function FeatureName({
     setEditing(true);
   }
 
-  // Saves a changed unique name. A blank or taken name keeps the previous one.
   function commit() {
     if (canceling.current) {
       canceling.current = false;
@@ -58,18 +85,13 @@ export function FeatureName({
       return;
     }
     const next = draft.trim();
-    const taken = features.some(
-      (feature) =>
-        String(feature.id) !== id &&
-        typeof feature.properties.name === "string" &&
-        feature.properties.name.toLowerCase() === next.toLowerCase(),
-    );
     setEditing(false);
-    if (next === "" || next.toLowerCase() === name.toLowerCase() || taken) return;
+    if (next === "" || next.toLowerCase() === name.toLowerCase() || nameTaken(features, id, next)) {
+      return;
+    }
     renameFeature(id, next);
   }
 
-  // Enter saves. Escape restores the name without saving.
   function onKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
     if (event.key === "Enter") {
       event.preventDefault();
@@ -82,57 +104,38 @@ export function FeatureName({
     }
   }
 
-  if (activate === "double-click") {
-    return (
-      <div
-        className="min-w-0 w-full"
-        onDoubleClick={(event) => {
-          event.preventDefault();
-          event.stopPropagation();
-          startEdit();
-        }}
-      >
-        <input
-          ref={fieldRef}
-          aria-label="Feature name"
-          readOnly={!editing}
-          tabIndex={editing ? 0 : -1}
-          value={editing ? draft : name}
-          onChange={(event) => setDraft(event.target.value)}
-          onBlur={() => {
-            if (editing) commit();
-          }}
-          onKeyDown={onKeyDown}
-          onClick={(event) => event.stopPropagation()}
-          className={`${sidebarNameClassName} ${editing ? "border-text-primary bg-surface-canvas" : "pointer-events-none border-transparent bg-transparent"}`}
-        />
-      </div>
-    );
-  }
-
-  if (editing) {
-    return (
+  return (
+    <div
+      className="min-w-0 w-full"
+      onDoubleClick={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        startEdit();
+      }}
+    >
       <input
+        ref={fieldRef}
         aria-label="Feature name"
-        autoFocus
-        value={draft}
+        readOnly={!editing}
+        tabIndex={editing ? 0 : -1}
+        value={editing ? draft : name}
         onChange={(event) => setDraft(event.target.value)}
-        onFocus={(event) => event.currentTarget.select()}
-        onBlur={commit}
+        onBlur={() => {
+          if (editing) commit();
+        }}
         onKeyDown={onKeyDown}
         onClick={(event) => event.stopPropagation()}
-        className="template-body-medium w-fit min-w-full max-w-full rounded-[4px] border-0 bg-surface-canvas px-2 py-1 text-text-primary outline-1 outline-text-primary"
+        className={`${sidebarNameClassName} ${editing ? "border-text-primary bg-surface-canvas" : "pointer-events-none border-transparent bg-transparent"}`}
       />
-    );
-  }
+    </div>
+  );
+}
 
-  return (
-    <button
-      type="button"
-      onClick={startEdit}
-      className={`${nameClassName} hover:bg-surface-translucent-placeholder-2`}
-    >
-      {name}
-    </button>
+function nameTaken(features: GeoJSONStoreFeatures[], id: string, name: string) {
+  return features.some(
+    (feature) =>
+      String(feature.id) !== id &&
+      typeof feature.properties.name === "string" &&
+      feature.properties.name.toLowerCase() === name.toLowerCase(),
   );
 }

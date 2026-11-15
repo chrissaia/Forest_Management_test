@@ -12,6 +12,7 @@ import {
   deleteMapFeature,
   insertMapFeature,
   renameMapFeature,
+  describeMapFeature,
   updateMapFeature,
 } from "@/lib/maps/map-actions";
 import {
@@ -52,6 +53,10 @@ export function useMapFeatures(
       enqueue(saveQueue, () => renameMapFeature(projectId, change.id, change.name));
       return;
     }
+    if (change.type === "describe") {
+      enqueue(saveQueue, () => describeMapFeature(projectId, change.id, change.description));
+      return;
+    }
     const stored = change.type === "insert"
       ? next[next.length - 1]
       : next.find((feature) => String(feature.id) === String(change.feature.id));
@@ -87,7 +92,12 @@ export function useMapFeatures(
     applyChange({ type: "rename", id, name });
   }, [applyChange]);
 
-  return { features, insertFeature, updateFeature, deleteFeature, renameFeature };
+  // Sets one feature description and writes that text.
+  const describeFeature = useCallback((id: string, description: string) => {
+    applyChange({ type: "describe", id, description });
+  }, [applyChange]);
+
+  return { features, insertFeature, updateFeature, deleteFeature, renameFeature, describeFeature };
 }
 
 // Runs feature writes one after another so a later delete waits for an earlier insert.
