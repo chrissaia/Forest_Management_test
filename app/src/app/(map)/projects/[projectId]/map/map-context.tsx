@@ -9,6 +9,7 @@ import { createContext, useContext, useState } from "react";
 import type { GeoJSONStoreFeatures } from "terra-draw";
 import type { ProjectAction } from "@/lib/actions/actions";
 import { keptHoverId, keptSelectedId, selectedForTool } from "./sketch/kinds/polygon/hit";
+import { useMapActions } from "./use-map-actions";
 import { useMapFeatures } from "./use-map-features";
 
 export type MapTool = "pointer" | "polygon" | "point";
@@ -37,6 +38,8 @@ type MapContextValue = {
   hoverFeature: string | null;
   setHoverFeature: (id: string | null) => void;
   actions: ProjectAction[];
+  renameAction: (id: number, name: string) => void;
+  describeAction: (id: number, description: string) => void;
   selectedAction: number | null;
   setSelectedAction: (id: number | null) => void;
 };
@@ -59,8 +62,8 @@ export function MapProvider({
   const [panel, setPanel] = useState<MapPanel>("features");
   const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
   const [hoverFeature, setHoverFeature] = useState<string | null>(null);
-  const [actions] = useState(initialActions);
   const [selectedAction, setSelectedAction] = useState<number | null>(null);
+  const { actions, renameAction, describeAction } = useMapActions(projectId, initialActions);
   const { features, insertFeature, updateFeature, deleteFeature, renameFeature, describeFeature } = useMapFeatures(
     projectId,
     initialFeatures,
@@ -100,6 +103,8 @@ export function MapProvider({
         hoverFeature,
         setHoverFeature,
         actions,
+        renameAction,
+        describeAction,
         selectedAction,
         setSelectedAction,
       }}

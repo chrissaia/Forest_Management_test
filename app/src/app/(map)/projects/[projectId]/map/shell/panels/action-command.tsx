@@ -2,7 +2,7 @@
 
 /*
  * The actions command sidebar.
- * A row selects that action. The details sidebar stays closed.
+ * A row selects that action and opens its details.
  */
 
 import { useState } from "react";

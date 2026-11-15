@@ -14,22 +14,27 @@ import { ParcelDetails } from "./parcel-details";
 import { SoilCommand } from "./soil-command";
 import { SoilDetails } from "./soil-details";
 
+type PanelSelection = {
+  feature: string | null;
+  action: number | null;
+};
+
 type PanelView = {
   Command: () => React.JSX.Element | null;
   Details: () => React.JSX.Element | null;
-  detailsOpen: (selectedFeature: string | null) => boolean;
+  detailsOpen: (selection: PanelSelection) => boolean;
 };
 
 export const panelViews: Record<MapPanel, PanelView> = {
   features: {
     Command: FeatureCommand,
     Details: FeatureDetails,
-    detailsOpen: (selectedFeature) => selectedFeature !== null,
+    detailsOpen: ({ feature }) => feature !== null,
   },
   actions: {
     Command: ActionCommand,
     Details: ActionDetails,
-    detailsOpen: () => false,
+    detailsOpen: ({ action }) => action !== null,
   },
   soils: {
     Command: SoilCommand,

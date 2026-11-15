@@ -11,9 +11,9 @@ import { useSidebarWidth } from "./use-sidebar-width";
 
 // The right sidebar for the open panel.
 export function DetailsSidebar() {
-  const { panel, selectedFeature } = useMap();
+  const { panel, selectedFeature, selectedAction } = useMap();
   const view = panelViews[panel];
-  const open = view.detailsOpen(selectedFeature);
+  const open = view.detailsOpen({ feature: selectedFeature, action: selectedAction });
   const {
     asideRef,
     width,
