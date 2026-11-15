@@ -24,7 +24,7 @@ export default function ProjectMapPage({
   params,
 }: PageProps<"/projects/[projectId]/map">) {
   return (
-    <Suspense fallback={<main className="min-h-0 flex-1" />}>
+    <Suspense fallback={<main className="min-h-0 min-w-0 flex-1 overflow-hidden" />}>
       <ProjectMap params={params} />
     </Suspense>
   );
@@ -71,7 +71,7 @@ async function ProjectMap({
       initialFeatures={sketchFeatures(map.features)}
       initialActions={actions}
     >
-      <main className="relative min-h-0 flex-1">
+      <main className="relative min-h-0 min-w-0 flex-1 overflow-hidden">
         <MapStage
           projectId={id}
           mapX={map.cameraX}
