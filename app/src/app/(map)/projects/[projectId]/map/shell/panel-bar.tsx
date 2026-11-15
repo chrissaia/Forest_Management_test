@@ -34,7 +34,7 @@ export function PanelBar() {
         <img src="/icons/map/grain.svg" alt="" width={24} height={24} className="shrink-0" />
       </Panel>
       <Panel id="parcels" label="Parcels">
-        <img src="/icons/map/box-seam.svg" alt="" width={20} height={20} className="shrink-0" />
+        <img src="/icons/map/3d-select-face.svg" alt="" width={24} height={24} className="shrink-0" />
       </Panel>
     </nav>
   );
