@@ -20,7 +20,6 @@ export function ActionDetails() {
     actions,
     features,
     selectedAction,
-    setSelectedAction,
     renameAction,
     describeAction,
     linking,
@@ -43,7 +42,6 @@ export function ActionDetails() {
         name={action.name}
         featuresOpen={linking}
         onToggleFeatures={() => setLinking(!linking)}
-        onClose={() => setSelectedAction(null)}
         onName={(change) => saveName(action.id, action.name, change, renameAction)}
       />
       {linking ? (
@@ -72,14 +70,12 @@ function ActionHeader({
   name,
   featuresOpen,
   onToggleFeatures,
-  onClose,
   onName,
 }: {
   actionId: number;
   name: string;
   featuresOpen: boolean;
   onToggleFeatures: () => void;
-  onClose: () => void;
   onName: (change: TextFieldChange) => void;
 }) {
   const { renameNewAction, setRenameNewAction } = useMap();
@@ -94,12 +90,9 @@ function ActionHeader({
         aria-label="Add keyframes"
         aria-pressed={featuresOpen}
         onClick={onToggleFeatures}
-        className={`${headerButtonClass} ${featuresOpen ? "bg-surface-translucent-placeholder-2" : ""}`}
+        className={`${headerButtonClass} aria-pressed:bg-surface-action-linked aria-pressed:hover:bg-surface-action-linked`}
       >
-        <img src="/icons/map/add-keyframes.svg" alt="" width={18} height={18} />
-      </button>
-      <button type="button" aria-label="Close action" onClick={onClose} className={headerButtonClass}>
-        <img src="/icons/map/close-outline.svg" alt="" width={18} height={18} />
+        <span aria-hidden="true" className="size-[18px] bg-current text-text-primary [mask-image:url(/icons/map/add-keyframes.svg)] [mask-position:center] [mask-repeat:no-repeat] [mask-size:contain]" />
       </button>
       </div>
     </header>

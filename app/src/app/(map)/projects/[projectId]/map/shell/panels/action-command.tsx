@@ -51,6 +51,12 @@ export function ActionList({ featureId }: { featureId?: string } = {}) {
           <img src="/icons/map/search-outline.svg" alt="" width={20} height={20} />
           <input aria-label="Search stand actions" placeholder="Search actions…" value={actionQuery} onChange={(event) => setActionQuery(event.target.value)} className="template-body-small min-w-0 flex-1 border-0 bg-transparent py-1 text-text-primary outline-none placeholder:text-text-secondary" />
         </div>}
+        {selectedAction !== null ? (
+          <button type="button" aria-label="Close action" onClick={() => setSelectedAction(null)} className={`ml-auto ${headerButtonClass}`}>
+            <img src="/icons/map/close-outline.svg" alt="" width={18} height={18} />
+          </button>
+        ) : (
+          <>
         <div ref={filterRef} className="relative ml-auto" onKeyDown={(event) => { if (event.key === "Escape") { setFilterOpen(false); filterRef.current?.querySelector("button")?.focus(); } }}>
           <button type="button" aria-label={activeFilterIds.length ? `Filter actions (${activeFilterIds.length} active)` : "Filter actions"} aria-expanded={filterOpen} aria-haspopup="dialog" onClick={() => setFilterOpen(!filterOpen)} className={`relative ${headerButtonClass}`}>
             <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 6h16M7 12h10M10 18h4" /></svg>
@@ -80,6 +86,8 @@ export function ActionList({ featureId }: { featureId?: string } = {}) {
         >
           <img src="/icons/map/add-outline.svg" alt="" width={18} height={18} className="shrink-0" />
         </button>
+          </>
+        )}
       </div>
       {createError ? <p role="alert" className="template-body-small px-4 py-2 text-text-primary">{createError}</p> : null}
       {selectedAction !== null ? <div className="min-h-0 flex-1"><ActionDetails /></div> : <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto bg-transparent py-2">

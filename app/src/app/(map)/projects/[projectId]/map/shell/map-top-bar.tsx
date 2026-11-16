@@ -21,7 +21,7 @@ export function MapTopBar() {
   }, [rightSidebarOpen, setRightSidebarOpen, leftSidebarOpen, setLeftSidebarOpen, featureDetailsOpen, setFeatureDetailsOpen]);
   const detailsTip = useToolTip();
   return (
-    <div role="toolbar" aria-label="Map sidebars" className="flex h-8 shrink-0 items-center justify-between border-b border-border-map bg-surface-canvas px-2">
+    <div role="toolbar" aria-label="Map sidebars" className="relative z-[60] flex h-8 shrink-0 items-center justify-between border-b border-border-map bg-surface-canvas px-2">
       <SidebarToggle side="left" open={leftSidebarOpen} onToggle={() => setLeftSidebarOpen(!leftSidebarOpen)} />
       <div className="flex items-center gap-2">
         <button type="button" aria-label="Toggle feature details" aria-keyshortcuts="D"

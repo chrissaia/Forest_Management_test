@@ -32,10 +32,10 @@ export function DetailsSidebar() {
       ref={asideRef}
       aria-label="Actions"
       style={{ width }}
-      className="absolute inset-y-0 right-0 z-10"
+      className="absolute inset-y-0 right-0 z-30"
     >
-      <div className="flex h-full flex-col overflow-hidden border-l border-border-map bg-surface-canvas">
-        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+      <div className="flex h-full flex-col border-l border-border-map bg-surface-canvas">
+        <div className="flex min-h-0 flex-1 flex-col">
           <Details />
         </div>
       </div>
