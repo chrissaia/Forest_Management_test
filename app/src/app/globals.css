@@ -2,12 +2,15 @@
 
 :root {
   --surface-canvas: #ffffff;
+  --surface-actions: #f5f5f5;
   --surface-navigation: #cccccc;
   --surface-header: #8e8e93;
   --surface-translucent-placeholder: rgb(120 120 128 / 16%);
   --surface-translucent-placeholder-2: rgb(120 120 128 / 8%);
   --surface-control: #e0e0e0;
   --surface-neutral: #d9d9d9;
+  --surface-selected: #e5f4ff;
+  --border-selected: #0d99ff;
   --border-map: rgb(120 120 120 / 20%);
   --text-primary: #000000;
   --text-secondary: #86868b;
@@ -20,12 +23,15 @@
 
 @theme inline {
   --color-surface-canvas: var(--surface-canvas);
+  --color-surface-actions: var(--surface-actions);
   --color-surface-navigation: var(--surface-navigation);
   --color-surface-header: var(--surface-header);
   --color-surface-translucent-placeholder: var(--surface-translucent-placeholder);
   --color-surface-translucent-placeholder-2: var(--surface-translucent-placeholder-2);
   --color-surface-control: var(--surface-control);
   --color-surface-neutral: var(--surface-neutral);
+  --color-surface-selected: var(--surface-selected);
+  --color-border-selected: var(--border-selected);
   --color-border-map: var(--border-map);
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);

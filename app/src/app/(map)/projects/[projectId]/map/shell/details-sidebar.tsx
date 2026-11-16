@@ -11,9 +11,9 @@ import { useSidebarWidth } from "./use-sidebar-width";
 
 // The right sidebar for the open panel.
 export function DetailsSidebar() {
-  const { panel, linking, selectedFeature, selectedAction } = useMap();
+  const { panel, linking, selectedFeature, selectedAction, rightSidebarOpen } = useMap();
   const view = panelViews[panel];
-  const open = view.detailsOpen({ feature: selectedFeature, action: selectedAction, linking });
+  const open = rightSidebarOpen && view.detailsOpen({ feature: selectedFeature, action: selectedAction, linking });
   const {
     asideRef,
     width,
@@ -31,11 +31,13 @@ export function DetailsSidebar() {
     <aside
       ref={asideRef}
       aria-label="Details"
-      style={{ width }}
+      style={{ width, right: selectedFeature !== null ? "var(--map-feature-width, 224px)" : 0 }}
       className="absolute inset-y-0 right-0 z-10"
     >
-      <div className="flex h-full flex-col overflow-hidden border-l border-border-map bg-surface-canvas">
-        <Details />
+      <div className="flex h-full flex-col overflow-hidden border-l border-border-map bg-surface-canvas [background-image:linear-gradient(var(--surface-translucent-placeholder-2),var(--surface-translucent-placeholder-2))]">
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+          <Details />
+        </div>
       </div>
       <div
         role="separator"

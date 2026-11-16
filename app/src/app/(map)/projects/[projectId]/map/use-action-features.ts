@@ -32,7 +32,16 @@ export function useActionFeatures(projectId: number, initialLinks: ActionFeature
     enqueue(saveQueue, write);
   }, [projectId]);
 
-  return { links, toggleLinkedFeature };
+  // Wait for persistence before completing the new-action flow.
+  const linkFeature = useCallback(async (actionId: number, featureId: string) => {
+    await linkProjectActionFeature(projectId, actionId, featureId);
+    if (linksRef.current.some((link) => link.actionId === actionId && link.featureId === featureId)) return;
+    const next = [...linksRef.current, { actionId, featureId }];
+    linksRef.current = next;
+    setLinks(next);
+  }, [projectId]);
+
+  return { links, toggleLinkedFeature, linkFeature };
 }
 
 // Runs link writes one after another.

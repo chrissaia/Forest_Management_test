@@ -13,9 +13,11 @@ import type { MapFeature } from "@/lib/maps/map-features";
 import { getProject } from "@/lib/projects/projects";
 import { createClient } from "@/lib/supabase/server";
 import { MapProvider } from "./map-context";
+import { MapTopBar } from "./shell/map-top-bar";
 import { MapStage } from "./shell/map-stage";
 import { PanelBar } from "./shell/panel-bar";
 import { CommandSidebar } from "./shell/command-sidebar";
+import { FeatureSidebar } from "./shell/feature-sidebar";
 import { DetailsSidebar } from "./shell/details-sidebar";
 import { MapToolbar } from "./shell/map-toolbar";
 import { MapToolKeys } from "./shell/map-tool-keys";
@@ -76,6 +78,8 @@ async function ProjectMap({
       initialActions={actions}
       initialActionFeatures={actionFeatures}
     >
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+      <MapTopBar />
       <main className="relative min-h-0 min-w-0 flex-1 overflow-hidden">
         <MapStage
           projectId={id}
@@ -86,9 +90,11 @@ async function ProjectMap({
         <PanelBar />
         <CommandSidebar />
         <DetailsSidebar />
+        <FeatureSidebar />
         <MapToolbar />
         <MapToolKeys />
       </main>
+      </div>
     </MapProvider>
   );
 }

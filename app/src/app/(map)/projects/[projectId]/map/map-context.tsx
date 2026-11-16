@@ -25,6 +25,10 @@ export const mapPanel: Record<MapPanel, string> = {
 };
 
 type MapContextValue = {
+  leftSidebarOpen: boolean;
+  setLeftSidebarOpen: (open: boolean) => void;
+  rightSidebarOpen: boolean;
+  setRightSidebarOpen: (open: boolean) => void;
   tool: MapTool;
   setTool: (tool: MapTool) => void;
   panel: MapPanel;
@@ -35,19 +39,27 @@ type MapContextValue = {
   deleteFeature: (id: string) => void;
   renameFeature: (id: string, name: string) => void;
   describeFeature: (id: string, description: string) => void;
+  renameNewFeature: string | null;
+  setRenameNewFeature: (id: string | null) => void;
   selectedFeature: string | null;
   setSelectedFeature: (id: string | null) => void;
   hoverFeature: string | null;
   setHoverFeature: (id: string | null) => void;
   hoverAction: number | null;
   setHoverAction: (id: number | null) => void;
+  actionFilterIds: string[];
+  setActionFilterIds: (ids: string[]) => void;
   actions: ProjectAction[];
+  createAction: (featureId?: string) => Promise<void>;
+  renameNewAction: number | null;
+  setRenameNewAction: (id: number | null) => void;
   renameAction: (id: number, name: string) => void;
   describeAction: (id: number, description: string) => void;
   selectedAction: number | null;
   setSelectedAction: (id: number | null) => void;
   linking: boolean;
   setLinking: (linking: boolean) => void;
+  actionFeatureLinks: ActionFeatureLink[];
   linkedFeatureIds: string[];
   highlightedFeatureIds: string[];
   toggleLinkedFeature: (featureId: string) => void;
@@ -69,26 +81,64 @@ export function MapProvider({
   initialActionFeatures?: ActionFeatureLink[];
   children: React.ReactNode;
 }) {
+  const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
+  const [rightSidebarOpen, setRightSidebarOpen] = useState(true);
   const [tool, setToolState] = useState<MapTool>("pointer");
   const [panel, setPanelState] = useState<MapPanel>("features");
   const [linking, setLinkingState] = useState(false);
-  const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
+  const [renameNewFeature, setRenameNewFeature] = useState<string | null>(null);
+  const [selectedFeature, setSelectedFeatureState] = useState<string | null>(null);
   const [hoverFeature, setHoverFeature] = useState<string | null>(null);
   const [hoverAction, setHoverAction] = useState<number | null>(null);
   const [selectedAction, setSelectedActionState] = useState<number | null>(null);
-  const { actions, renameAction, describeAction } = useMapActions(projectId, initialActions);
-  const { links, toggleLinkedFeature: toggleActionFeature } = useActionFeatures(
+  const [actionFilterIds, setActionFilterIds] = useState<string[]>([]);
+  const [renameNewAction, setRenameNewAction] = useState<number | null>(null);
+  const { actions, renameAction, describeAction, createAction: insertAction } = useMapActions(projectId, initialActions);
+  const { links, toggleLinkedFeature: toggleActionFeature, linkFeature } = useActionFeatures(
     projectId,
     initialActionFeatures,
   );
-  const { features, insertFeature, updateFeature, deleteFeature, renameFeature, describeFeature } = useMapFeatures(
+  const { features, insertFeature: storeFeature, updateFeature, deleteFeature, renameFeature, describeFeature } = useMapFeatures(
     projectId,
     initialFeatures,
   );
 
+  // Finish drawing by opening the new feature for naming.
+  const insertFeature = async (feature: GeoJSONStoreFeatures) => {
+    const id = String(feature.id);
+    if (features.some((item) => String(item.id) === id)) return;
+    const linkingAction = linking ? selectedAction : null;
+    const saved = storeFeature(feature);
+    setToolState("pointer");
+    if (linkingAction === null) {
+      setLinkingState(false);
+      setPanelState("features");
+    }
+    setSelectedFeatureState(id);
+    setRightSidebarOpen(true);
+    setRenameNewFeature(id);
+    if (linkingAction !== null) {
+      try {
+        await saved;
+        toggleActionFeature(linkingAction, id);
+      } catch (error) { console.error(error); }
+    }
+  };
+
+  const createAction = async (featureId?: string) => {
+    const featureToLink = featureId ?? selectedFeature;
+    const id = await insertAction();
+    if (featureToLink !== null) await linkFeature(id, featureToLink);
+    setSelectedActionState(id);
+    setLinkingState(false);
+    setPanelState("actions");
+    setRightSidebarOpen(true);
+    setRenameNewAction(id);
+  };
+
   const featureIds = features.map((feature) => String(feature.id));
   const selectedId = keptSelectedId(selectedFeature, featureIds);
-  if (selectedId !== selectedFeature) setSelectedFeature(selectedId);
+  if (selectedId !== selectedFeature) setSelectedFeatureState(selectedId);
   const hoverId = keptHoverId(hoverFeature, selectedId, featureIds);
   if (hoverId !== hoverFeature) setHoverFeature(hoverId);
   if (selectedAction !== null && !actions.some((action) => action.id === selectedAction)) {
@@ -103,10 +153,18 @@ export function MapProvider({
   const featureLinks = linkedFeatureIds(links, selectedAction, featureIds);
   const highlightedLinks = highlightedFeatureIds(links, selectedAction, hoverAction, featureIds);
 
+  // Any feature selection reveals its details, including reselecting the same feature.
+  const setSelectedFeature = (id: string | null) => {
+    setSelectedFeatureState(id);
+    if (id !== null) {
+      setPanelState("features");
+      setRightSidebarOpen(true);
+    }
+  };
+
   // Changes the tool and clears the selection unless the tool is the pointer.
   const setTool = (next: MapTool) => {
     setToolState(next);
-    if (next !== "pointer") setLinkingState(false);
     const nextSelected = selectedForTool(next, selectedFeature);
     if (nextSelected !== selectedFeature) setSelectedFeature(nextSelected);
   };
@@ -139,6 +197,10 @@ export function MapProvider({
   return (
     <MapContext.Provider
       value={{
+        leftSidebarOpen,
+        setLeftSidebarOpen,
+        rightSidebarOpen,
+        setRightSidebarOpen,
         tool,
         setTool,
         panel,
@@ -149,19 +211,27 @@ export function MapProvider({
         deleteFeature,
         renameFeature,
         describeFeature,
+        renameNewFeature,
+        setRenameNewFeature,
         selectedFeature,
         setSelectedFeature,
         hoverFeature,
         setHoverFeature,
         hoverAction,
         setHoverAction,
+        actionFilterIds,
+        setActionFilterIds,
         actions,
+        createAction,
+        renameNewAction,
+        setRenameNewAction,
         renameAction,
         describeAction,
         selectedAction,
         setSelectedAction,
         linking,
         setLinking,
+        actionFeatureLinks: links,
         linkedFeatureIds: featureLinks,
         highlightedFeatureIds: highlightedLinks,
         toggleLinkedFeature,

@@ -50,3 +50,14 @@ export async function unlinkProjectActionFeature(
   const supabase = await createClient();
   await writeActionFeatureUnlink(projectId, actionId, featureId, supabase);
 }
+
+// Creates an untitled action with no description or feature links.
+export async function createProjectAction(projectId: number) {
+  if (!Number.isInteger(projectId)) throw new Error("Invalid project.");
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("actions")
+    .insert({ project_id: projectId, name: "Untitled action", status: "planned", description: "" })
+    .select("id, name, description, edited_at").single();
+  if (error) throw new Error(error.message);
+  return { id: data.id as number, name: data.name as string, description: data.description as string, editedAt: data.edited_at as string };
+}

@@ -5,10 +5,14 @@
 import Link from "next/link";
 import { Panel } from "./panel";
 
+// Temporarily hide the navigation rail while keeping its panels available in code.
+export const mapNavVisible = false;
 export const mapNavWidth = 64;
 
 // Home link and the feature, action, soil, and parcel panel buttons.
 export function PanelBar() {
+  if (!mapNavVisible) return null;
+
   return (
     <nav
       aria-label="Map"

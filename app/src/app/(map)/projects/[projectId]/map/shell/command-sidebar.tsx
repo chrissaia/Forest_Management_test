@@ -7,14 +7,14 @@
 
 import { useMap } from "../map-context";
 import { panelViews } from "./panels/panel-views";
-import { mapNavWidth } from "./panel-bar";
+import { mapNavVisible, mapNavWidth } from "./panel-bar";
 import { useSidebarWidth } from "./use-sidebar-width";
 
 // The left sidebar. Its contents follow the selected panel.
 export function CommandSidebar() {
-  const { panel, linking, selectedFeature, selectedAction } = useMap();
+  const { panel, linking, selectedFeature, selectedAction, leftSidebarOpen } = useMap();
   const view = panelViews[panel];
-  const open = view.commandOpen({ feature: selectedFeature, action: selectedAction, linking });
+  const open = leftSidebarOpen && view.commandOpen({ feature: selectedFeature, action: selectedAction, linking });
   const {
     asideRef,
     width,
@@ -31,7 +31,7 @@ export function CommandSidebar() {
   return (
     <aside
       ref={asideRef}
-      style={{ width, left: mapNavWidth }}
+      style={{ width, left: mapNavVisible ? mapNavWidth : 0 }}
       className="absolute inset-y-0 z-10"
     >
       <div className="flex h-full flex-col overflow-hidden border-r border-border-map bg-surface-canvas">

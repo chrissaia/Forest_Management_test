@@ -15,6 +15,7 @@ export function useSidebarWidth(
   storageKey: string,
   edge: "start" | "end",
   open = true,
+  occupiedWidthProperty?: string,
 ) {
   const asideRef = useRef<HTMLElement>(null);
   const dragging = useRef(false);
@@ -60,6 +61,15 @@ export function useSidebarWidth(
       document.documentElement.classList.remove("sidebar-resizing");
     };
   }, []);
+
+  // Exposes the occupied width to the bottom panel between the sidebars.
+  useEffect(() => {
+    const parent = asideRef.current?.parentElement;
+    if (!parent) return;
+    const property = occupiedWidthProperty ?? (edge === "start" ? "--map-left-width" : "--map-right-width");
+    parent.style.setProperty(property, open ? `${width}px` : "0px");
+    return () => { parent.style.setProperty(property, "0px"); };
+  }, [edge, width, open, occupiedWidthProperty]);
 
   // Starts a sidebar resize drag.
   function onPointerDown(event: React.PointerEvent<HTMLDivElement>) {

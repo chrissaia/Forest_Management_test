@@ -54,7 +54,7 @@ export function FeatureCommand() {
             >
               <span
                 aria-hidden="true"
-                className="size-3.5 shrink-0 bg-surface-header [mask-image:url(/icons/map/pentagon.svg)] [mask-position:center] [mask-repeat:no-repeat] [mask-size:contain] group-hover:hidden"
+                className="size-3 shrink-0 bg-surface-header [mask-image:url(/icons/map/pentagon.svg)] [mask-position:center] [mask-repeat:no-repeat] [mask-size:contain] group-hover:hidden"
               />
               <button
                 type="button"
@@ -63,11 +63,11 @@ export function FeatureCommand() {
                   event.stopPropagation();
                   deleteFeature(id);
                 }}
-                className="hidden size-3.5 shrink-0 cursor-pointer items-center justify-center text-surface-header transition-colors duration-200 ease-in-out group-hover:flex hover:text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary"
+                className="hidden size-3 shrink-0 cursor-pointer items-center justify-center text-surface-header transition-colors duration-200 ease-in-out group-hover:flex hover:text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary"
               >
                 <span
                   aria-hidden="true"
-                  className="flex size-3.5 -translate-y-[2.56px] items-center justify-center overflow-hidden text-[24px] leading-none font-extralight tracking-normal"
+                  className="flex size-3 -translate-y-[2.56px] items-center justify-center overflow-hidden text-[24px] leading-none font-extralight tracking-normal"
                 >
                   ×
                 </span>

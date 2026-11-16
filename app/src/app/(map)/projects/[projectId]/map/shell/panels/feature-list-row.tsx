@@ -41,11 +41,11 @@ export function FeatureListRow({
       onMouseLeave={onHoverEnd}
       onClick={onPress}
       onKeyDown={onPress ? (event) => onRowKey(event, onPress) : undefined}
-      className={`group flex w-full items-center gap-2.5 overflow-hidden px-4 text-left transition-colors duration-200 ease-in-out hover:bg-surface-translucent-placeholder-2 ${onPress ? "cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary" : ""} ${pressed || hovered ? "bg-surface-translucent-placeholder-2" : ""}`}
+      className={`group flex w-full items-center gap-2.5 overflow-hidden px-4 text-left transition-colors duration-200 ease-in-out ${onPress ? "cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-selected" : ""} ${pressed ? "bg-surface-selected hover:bg-surface-selected" : `hover:bg-surface-translucent-placeholder-2 ${hovered ? "bg-surface-translucent-placeholder-2" : ""}`}`}
     >
       <span
         aria-hidden="true"
-        className={`size-3.5 shrink-0 bg-surface-header [mask-image:url(/icons/map/pentagon.svg)] [mask-position:center] [mask-repeat:no-repeat] [mask-size:contain] ${onRemove ? "group-hover:hidden" : ""}`}
+        className={`size-3 shrink-0 bg-surface-header [mask-image:url(/icons/map/pentagon.svg)] [mask-position:center] [mask-repeat:no-repeat] [mask-size:contain] ${onRemove ? "group-hover:hidden" : ""}`}
       />
       {onRemove ? (
         <button
@@ -55,11 +55,11 @@ export function FeatureListRow({
             event.stopPropagation();
             onRemove();
           }}
-          className="hidden size-3.5 shrink-0 cursor-pointer items-center justify-center text-surface-header transition-colors duration-200 ease-in-out group-hover:flex hover:text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary"
+          className="hidden size-3 shrink-0 cursor-pointer items-center justify-center text-surface-header transition-colors duration-200 ease-in-out group-hover:flex hover:text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary"
         >
           <span
             aria-hidden="true"
-            className="flex size-3.5 -translate-y-[2.56px] items-center justify-center overflow-hidden text-[24px] leading-none font-extralight tracking-normal"
+            className="flex size-3 -translate-y-[2.56px] items-center justify-center overflow-hidden text-[24px] leading-none font-extralight tracking-normal"
           >
             ×
           </span>

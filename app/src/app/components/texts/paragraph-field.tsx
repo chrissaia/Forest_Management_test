@@ -3,7 +3,7 @@
 /*
  * A description that grows with its text.
  * A click opens the field. Enter closes it. Shift+Enter adds a line.
- * The border stays put, so the text does not move.
+ * Text edits directly on the canvas without input chrome.
  * Hover shows the copy button while the field is idle and has text.
  */
 
@@ -11,7 +11,7 @@ import { useEffect, useRef, useState } from "react";
 import { textFieldChange, type TextFieldChange } from "@/app/components/texts/text-field-change";
 
 const fieldClassName =
-  "template-body-medium box-border block w-full resize-none overflow-hidden rounded-[4px] border-[0.25px] px-2 py-2 text-left leading-5 text-text-primary outline-none placeholder:text-text-secondary field-sizing-content";
+  "template-body-medium box-border block w-full resize-none overflow-hidden border-0 bg-transparent shadow-none px-2 py-2 text-left leading-5 text-text-primary outline-none placeholder:text-text-secondary field-sizing-content";
 
 // The saved description. The parent stores it through onText.
 export function ParagraphField({
@@ -106,11 +106,7 @@ export function ParagraphField({
         onChange={(event) => setDraft(event.target.value)}
         onBlur={commit}
         onKeyDown={onKeyDown}
-        className={`${fieldClassName} cursor-text ${
-          editing
-            ? "border-border-map bg-surface-canvas shadow-[0_1px_2px_0_rgba(0,0,0,0.3),0_1px_3px_1px_rgba(0,0,0,0.15)]"
-            : "border-transparent bg-transparent"
-        }`}
+        className={`${fieldClassName} cursor-text`}
       />
       {editing || value.trim() === "" ? null : (
         <div className="pointer-events-none absolute top-1 right-1 z-2 opacity-0 transition-opacity duration-200 group-hover:pointer-events-auto group-hover:opacity-100 has-[:focus-visible]:pointer-events-auto has-[:focus-visible]:opacity-100">

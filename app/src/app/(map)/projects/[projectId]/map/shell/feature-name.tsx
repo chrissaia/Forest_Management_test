@@ -13,7 +13,7 @@ import { useMap } from "../map-context";
 
 // Figma's layer rename: one 24px box. A transparent border keeps the text still.
 const sidebarNameClassName =
-  "template-body-medium box-border block h-6 max-h-6 min-h-6 w-full min-w-0 truncate rounded-[4px] border px-2 text-left leading-[22px] whitespace-nowrap text-text-primary outline-none";
+  "template-body-small box-border block h-6 max-h-6 min-h-6 w-full min-w-0 truncate rounded-[4px] border px-2 text-left leading-[22px] whitespace-nowrap text-text-primary outline-none";
 
 // The feature name. Enter or click-away saves a unique name.
 export function FeatureName({
@@ -27,7 +27,7 @@ export function FeatureName({
   features: GeoJSONStoreFeatures[];
   activate: "click" | "double-click";
 }) {
-  const { renameFeature } = useMap();
+  const { renameFeature, renameNewFeature, setRenameNewFeature } = useMap();
 
   // A blank or taken name stays as it is. Delete does not clear a feature name.
   function onText(change: TextFieldChange) {
@@ -38,7 +38,7 @@ export function FeatureName({
   }
 
   if (activate === "click") {
-    return <SentenceField value={name} ariaLabel="Feature name" onText={onText} />;
+    return <SentenceField value={name} ariaLabel="Feature name" onText={onText} autoEdit={renameNewFeature === id} onEditFocus={() => { if (renameNewFeature === id) setRenameNewFeature(null); }} />;
   }
 
   return (

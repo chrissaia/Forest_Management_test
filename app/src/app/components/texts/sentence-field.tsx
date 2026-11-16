@@ -19,12 +19,16 @@ export function SentenceField({
   value,
   onText,
   ariaLabel = "Name",
+  autoEdit = false,
+  onEditFocus,
 }: {
   value: string;
   onText: (change: TextFieldChange) => void;
   ariaLabel?: string;
+  autoEdit?: boolean;
+  onEditFocus?: () => void;
 }) {
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing] = useState(autoEdit);
   const [draft, setDraft] = useState(value);
   const canceling = useRef(false);
 
@@ -67,7 +71,10 @@ export function SentenceField({
         autoFocus
         value={draft}
         onChange={(event) => setDraft(event.target.value)}
-        onFocus={(event) => event.currentTarget.select()}
+        onFocus={(event) => {
+          event.currentTarget.select();
+          onEditFocus?.();
+        }}
         onBlur={commit}
         onKeyDown={onKeyDown}
         onClick={(event) => event.stopPropagation()}

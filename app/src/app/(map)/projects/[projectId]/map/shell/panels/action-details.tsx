@@ -82,10 +82,11 @@ function ActionHeader({
   onClose: () => void;
   onName: (change: TextFieldChange) => void;
 }) {
+  const { renameNewAction, setRenameNewAction } = useMap();
   return (
     <header className="flex w-full shrink-0 items-center gap-1 border-b border-surface-translucent-placeholder p-2">
       <div className="min-w-0 flex-1">
-        <SentenceField key={actionId} value={name} ariaLabel="Action name" onText={onName} />
+        <SentenceField key={actionId} value={name} ariaLabel="Action name" onText={onName} autoEdit={renameNewAction === actionId} onEditFocus={() => { if (renameNewAction === actionId) setRenameNewAction(null); }} />
       </div>
       <button
         type="button"

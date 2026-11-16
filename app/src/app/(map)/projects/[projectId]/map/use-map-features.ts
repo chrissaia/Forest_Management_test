@@ -75,6 +75,7 @@ export function useMapFeatures(
   // Appends one finished polygon and inserts its row.
   const insertFeature = useCallback((feature: GeoJSONStoreFeatures) => {
     applyChange({ type: "insert", feature });
+    return saveQueue.current;
   }, [applyChange]);
 
   // Replaces one polygon and updates its row when the geometry changed.

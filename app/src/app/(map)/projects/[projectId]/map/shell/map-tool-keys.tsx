@@ -25,7 +25,9 @@ export function exitsLinking(key: string) {
 
 // Listens on the window and selects the matching tool.
 export function MapToolKeys() {
-  const { setTool, linking, setLinking } = useMap();
+  const { tool, setTool, linking, setLinking } = useMap();
+  const toolRef = useRef(tool);
+  toolRef.current = tool;
   const linkingRef = useRef(linking);
   const setLinkingRef = useRef(setLinking);
   linkingRef.current = linking;
@@ -47,6 +49,7 @@ export function MapToolKeys() {
     let consumed: string | null = null;
     const onKeyDown = (event: KeyboardEvent) => {
       if (!linkingRef.current || !exitsLinking(event.key)) return;
+      if (event.key === "Enter" && toolRef.current !== "pointer") return;
       if (event.repeat || event.metaKey || event.ctrlKey || event.altKey) return;
       if (isTypingTarget(event.target)) return;
       consumed = event.key;

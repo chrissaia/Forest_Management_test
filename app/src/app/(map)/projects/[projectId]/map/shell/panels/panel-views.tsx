@@ -7,8 +7,6 @@
 import { useMap, type MapPanel } from "../../map-context";
 import { ActionCommand, ActionList } from "./action-command";
 import { ActionDetails } from "./action-details";
-import { FeatureCommand } from "./feature-command";
-import { FeatureDetails } from "./feature-details";
 import { ParcelCommand } from "./parcel-command";
 import { ParcelDetails } from "./parcel-details";
 import { SoilCommand } from "./soil-command";
@@ -29,15 +27,15 @@ type PanelView = {
 
 export const panelViews: Record<MapPanel, PanelView> = {
   features: {
-    Command: FeatureCommand,
-    Details: FeatureDetails,
+    Command: ActionCommand,
+    Details: ActionPanel,
     commandOpen: () => true,
-    detailsOpen: ({ feature }) => feature !== null,
+    detailsOpen: () => true,
   },
   actions: {
     Command: ActionCommand,
     Details: ActionPanel,
-    commandOpen: ({ linking }) => linking,
+    commandOpen: () => true,
     detailsOpen: () => true,
   },
   soils: {
