@@ -204,10 +204,13 @@ export function MapProvider({
     setLinkingState(false);
   };
 
-  // Turns link mode on for the selected action. The panel does not change.
+  // Turns link mode on for the selected action. Clears the feature selection first. The panel does not change.
   const setLinking = (next: boolean) => {
     if (next && selectedAction === null) return;
-    if (next) setToolState("pointer");
+    if (next) {
+      setSelectedFeature(null);
+      setToolState("pointer");
+    }
     setLinkingState(next);
   };
 
