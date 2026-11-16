@@ -38,6 +38,14 @@ export function FeatureListRow({
   onHoverEnd: () => void;
 }) {
   const { setContextMenu } = useMap();
+  // Selection and action links keep their colors while the pointer is over the row.
+  const background = pressed
+    ? linking
+      ? "bg-surface-action-linked hover:bg-surface-action-linked"
+      : "bg-surface-selected hover:bg-surface-selected"
+    : linked
+      ? "bg-surface-action-linked hover:bg-surface-action-linked"
+      : `${hovered ? "bg-surface-translucent-placeholder-2" : ""} hover:bg-surface-translucent-placeholder-2`;
   return (
     <div
       role={onPress ? "button" : undefined}
@@ -48,7 +56,7 @@ export function FeatureListRow({
       onContextMenu={(event) => { event.preventDefault(); event.stopPropagation(); setContextMenu({ kind: "feature", id, x: event.clientX, y: event.clientY }); }}
       onClick={onPress}
       onKeyDown={onPress ? (event) => onRowKey(event, onPress) : undefined}
-      className={`group flex w-full items-center gap-2.5 overflow-hidden px-4 text-left transition-colors duration-200 ease-in-out ${onPress ? "cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-selected" : ""} ${linking && hovered ? "bg-surface-translucent-placeholder-2 hover:bg-surface-translucent-placeholder-2" : linking && (pressed || linked) ? "bg-surface-action-linked hover:bg-surface-translucent-placeholder-2" : pressed || hovered ? "bg-surface-selected hover:bg-surface-selected" : `${linking ? "hover:bg-surface-translucent-placeholder-2" : "hover:bg-surface-selected"} ${linked ? "bg-surface-action-linked" : ""}`}`}
+      className={`group flex w-full items-center gap-2.5 overflow-hidden px-4 text-left transition-colors duration-200 ease-in-out ${onPress ? "cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-selected" : ""} ${background}`}
     >
       <span
         aria-hidden="true"

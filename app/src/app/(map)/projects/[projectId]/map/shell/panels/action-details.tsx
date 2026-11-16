@@ -155,6 +155,7 @@ function ActionFeatures({
           name={row.name}
           features={features}
           pressed={false}
+          linked
           linking
           hovered={hoverFeature === row.id}
           onRemove={() => onUnlink(row.id)}
