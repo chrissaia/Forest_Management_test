@@ -24,7 +24,11 @@ export const mapPanel: Record<MapPanel, string> = {
   parcels: "Parcels",
 };
 
+export type MapMenu = { kind: "feature"; id: string; x: number; y: number } | { kind: "action"; id: number; x: number; y: number };
+
 type MapContextValue = {
+  contextMenu: MapMenu | null;
+  setContextMenu: (menu: MapMenu | null) => void;
   featureDetailsOpen: boolean;
   setFeatureDetailsOpen: (open: boolean) => void;
   leftSidebarOpen: boolean;
@@ -84,6 +88,7 @@ export function MapProvider({
   initialActionFeatures?: ActionFeatureLink[];
   children: React.ReactNode;
 }) {
+  const [contextMenu, setContextMenu] = useState<MapMenu | null>(null);
   const [featureDetailsOpen, setFeatureDetailsOpenState] = useState(true);
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
   const [rightSidebarOpen, setRightSidebarOpenState] = useState(true);
@@ -153,10 +158,13 @@ export function MapProvider({
   }
 
   const featureLinks = linkedFeatureIds(links, selectedAction, featureIds);
-  const highlightedLinks = highlightedFeatureIds(links, selectedAction, hoverAction, featureIds);
+  const activeHoverFeature = contextMenu?.kind === "feature" ? contextMenu.id : hoverFeature;
+  const activeHoverAction = contextMenu?.kind === "action" ? contextMenu.id : hoverAction;
+  const highlightedLinks = highlightedFeatureIds(links, selectedAction, activeHoverAction, featureIds);
 
   const setFeatureDetailsOpen = (open: boolean) => {
     setFeatureDetailsOpenState(open);
+    if (!open) setSelectedFeatureState(null);
   };
 
   // Hiding Actions also clears action selection and map highlights.
@@ -212,6 +220,8 @@ export function MapProvider({
   return (
     <MapContext.Provider
       value={{
+        contextMenu,
+        setContextMenu,
         featureDetailsOpen,
         setFeatureDetailsOpen,
         leftSidebarOpen,
@@ -232,9 +242,9 @@ export function MapProvider({
         setRenameNewFeature,
         selectedFeature,
         setSelectedFeature,
-        hoverFeature,
+        hoverFeature: activeHoverFeature,
         setHoverFeature,
-        hoverAction,
+        hoverAction: activeHoverAction,
         setHoverAction,
         actionFilterIds,
         setActionFilterIds,

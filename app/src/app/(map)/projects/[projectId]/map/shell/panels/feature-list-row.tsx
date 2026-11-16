@@ -6,6 +6,7 @@
  */
 
 import type { GeoJSONStoreFeatures } from "terra-draw";
+import { useMap } from "../../map-context";
 import { FeatureName } from "../feature-name";
 
 // A feature row. Press toggles or selects. The X runs the caller's remove.
@@ -36,6 +37,7 @@ export function FeatureListRow({
   onHoverStart: () => void;
   onHoverEnd: () => void;
 }) {
+  const { setContextMenu } = useMap();
   return (
     <div
       role={onPress ? "button" : undefined}
@@ -43,6 +45,7 @@ export function FeatureListRow({
       aria-pressed={onPress ? pressed : undefined}
       onMouseEnter={onHoverStart}
       onMouseLeave={onHoverEnd}
+      onContextMenu={(event) => { event.preventDefault(); event.stopPropagation(); setContextMenu({ kind: "feature", id, x: event.clientX, y: event.clientY }); }}
       onClick={onPress}
       onKeyDown={onPress ? (event) => onRowKey(event, onPress) : undefined}
       className={`group flex w-full items-center gap-2.5 overflow-hidden px-4 text-left transition-colors duration-200 ease-in-out ${onPress ? "cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-selected" : ""} ${linking && hovered ? "bg-surface-translucent-placeholder-2 hover:bg-surface-translucent-placeholder-2" : linking && (pressed || linked) ? "bg-surface-action-linked hover:bg-surface-translucent-placeholder-2" : pressed || hovered ? "bg-surface-selected hover:bg-surface-selected" : `${linking ? "hover:bg-surface-translucent-placeholder-2" : "hover:bg-surface-selected"} ${linked ? "bg-surface-action-linked" : ""}`}`}

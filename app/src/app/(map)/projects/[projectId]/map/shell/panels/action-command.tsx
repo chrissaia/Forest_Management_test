@@ -7,6 +7,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { mapPanel, useMap } from "../../map-context";
+import { ActionDetails } from "./action-details";
 import { editedLabel } from "./action-edited";
 import { FeatureListRow } from "./feature-list-row";
 
@@ -15,7 +16,7 @@ const headerButtonClass =
 
 // Every action. A row opens that action's details.
 export function ActionList({ featureId }: { featureId?: string } = {}) {
-  const { actions, hoverAction, setHoverAction, setSelectedAction, createAction, actionFeatureLinks, features, selectedFeature, actionFilterIds, setActionFilterIds } = useMap();
+  const { actions, selectedAction, hoverAction, setHoverAction, setSelectedAction, createAction, setContextMenu, actionFeatureLinks, features, selectedFeature, actionFilterIds, setActionFilterIds } = useMap();
 
   const [actionQuery, setActionQuery] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
@@ -81,7 +82,7 @@ export function ActionList({ featureId }: { featureId?: string } = {}) {
         </button>
       </div>
       {createError ? <p role="alert" className="template-body-small px-4 py-2 text-text-primary">{createError}</p> : null}
-      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto bg-transparent py-2">
+      {selectedAction !== null ? <div className="min-h-0 flex-1"><ActionDetails /></div> : <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto bg-transparent py-2">
         {visibleActions.map((action) => {
           const hovered = hoverAction === action.id;
           return (
@@ -91,6 +92,7 @@ export function ActionList({ featureId }: { featureId?: string } = {}) {
               tabIndex={0}
               onMouseEnter={() => setHoverAction(action.id)}
               onMouseLeave={() => setHoverAction(null)}
+              onContextMenu={(event) => { event.preventDefault(); event.stopPropagation(); setContextMenu({ kind: "action", id: action.id, x: event.clientX, y: event.clientY }); }}
               onClick={() => setSelectedAction(action.id)}
               onKeyDown={(event) => {
                 if (event.target !== event.currentTarget) return;
@@ -127,7 +129,7 @@ export function ActionList({ featureId }: { featureId?: string } = {}) {
             </div>
           );
         })}
-      </div>
+      </div>}
     </>
   );
 }
@@ -231,35 +233,13 @@ export function ActionCommand() {
 }
 
 function ActionRowMenu({ id, name }: { id: number; name: string }) {
-  const { deleteAction } = useMap();
-  const [open, setOpen] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [error, setError] = useState(false);
-  const root = useRef<HTMLDivElement>(null);
-  const trigger = useRef<HTMLButtonElement>(null);
-  useEffect(() => {
-    if (!open) return;
-    root.current?.querySelector<HTMLButtonElement>('[role="menuitem"]')?.focus();
-    const dismiss = (event: PointerEvent) => {
-      if (!root.current?.contains(event.target as Node)) setOpen(false);
-    };
-    document.addEventListener("pointerdown", dismiss);
-    return () => document.removeEventListener("pointerdown", dismiss);
-  }, [open]);
-  return <div ref={root} className={`absolute right-2 top-1/2 -translate-y-1/2 z-10 ${open ? "opacity-100" : "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100"}`} onClick={(event) => event.stopPropagation()} onKeyDown={(event) => {
-    event.stopPropagation();
-    if (event.key === "Escape") { setOpen(false); trigger.current?.focus(); }
-  }}>
-    <button ref={trigger} type="button" aria-label={`More options for ${name}`} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)} className={headerButtonClass}>
+  const { setContextMenu } = useMap();
+  return <div className="absolute right-2 top-1/2 -translate-y-1/2 z-10 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100" onClick={(event) => event.stopPropagation()}>
+    <button type="button" aria-label={`More options for ${name}`} aria-haspopup="menu" onClick={(event) => {
+      const bounds = event.currentTarget.getBoundingClientRect();
+      setContextMenu({ kind: "action", id, x: bounds.right - 128, y: bounds.bottom + 4 });
+    }} className={headerButtonClass}>
       <svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="8" r="1.5"/><circle cx="8" cy="8" r="1.5"/><circle cx="13" cy="8" r="1.5"/></svg>
     </button>
-    {open ? <div role="menu" aria-label={`Options for ${name}`} className="absolute right-0 top-full z-30 mt-1 min-w-32 rounded-[8px] border border-border-map bg-surface-canvas p-1 shadow-lg">
-      <button type="button" role="menuitem" disabled={deleting} onClick={async () => {
-        setDeleting(true); setError(false);
-        try { await deleteAction(id); }
-        catch { setError(true); setDeleting(false); }
-      }} className="template-body-small w-full cursor-pointer rounded-[4px] px-2 py-1 text-left text-red-600 hover:bg-surface-translucent-placeholder-2 focus-visible:outline-2 focus-visible:outline-border-selected disabled:opacity-50">{deleting ? "Deleting…" : "Delete"}</button>
-      {error ? <p role="alert" className="template-body-small px-2 py-1 text-text-secondary">Could not delete. Try again.</p> : null}
-    </div> : null}
   </div>;
 }

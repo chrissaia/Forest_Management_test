@@ -95,6 +95,7 @@ export function SketchSession({
     linking,
     highlightedFeatureIds,
     toggleLinkedFeature,
+    setContextMenu,
   } = useMap();
   const toolRef = useRef<MapTool>(tool);
   const insertRef = useRef(insertFeature);
@@ -106,6 +107,8 @@ export function SketchSession({
   const selectedRef = useRef(selectedFeature);
   const linkingRef = useRef(linking);
   const linkedRef = useRef(highlightedFeatureIds);
+  const contextMenuRef = useRef(setContextMenu);
+  useEffect(() => { contextMenuRef.current = setContextMenu; }, [setContextMenu]);
   const toggleLinkedRef = useRef(toggleLinkedFeature);
   const featuresRef = useRef(features);
   featuresRef.current = features;
@@ -375,29 +378,36 @@ export function SketchSession({
       setSelectedRef.current(String(decision.selectedId));
       draw.selectFeature(decision.selectedId);
     };
-    // Deletes the vertex under the pointer while reshaping.
+    // Right-click opens feature actions; a vertex hit during reshaping still deletes that vertex.
     const onContextMenu = (event: MouseEvent) => {
       event.preventDefault();
       event.stopPropagation();
+      if (toolRef.current !== "pointer" || !started) return;
+      const point = containerPoint(host, event);
       const gesture = pointerGesture({
         kind: "context-menu",
         tool: toolRef.current,
         reshaping: reshape.current,
         started,
       });
-      if (gesture !== "delete-vertex") return;
-      const selected = selectionId(draw);
-      if (selected === null) return;
-      const feature = draw.getSnapshotFeature(selected);
-      if (!feature || feature.geometry.type !== "Polygon") return;
-      const point = containerPoint(host, event);
-      const ring = feature.geometry.coordinates[0] as number[][];
-      const vertex = vertexAtPointer(ring, point, projectPoint(map));
-      if (!vertex) return;
-      draw.updateFeatureGeometry(selected, {
-        type: "Polygon",
-        coordinates: [ringWithoutVertex(ring, vertex.index)],
-      });
+      if (gesture === "delete-vertex") {
+        const selected = selectionId(draw);
+        const feature = selected === null ? null : draw.getSnapshotFeature(selected);
+        if (feature?.geometry.type === "Polygon") {
+          const ring = feature.geometry.coordinates[0] as number[][];
+          const vertex = vertexAtPointer(ring, point, projectPoint(map));
+          if (vertex && selected !== null) {
+            draw.updateFeatureGeometry(selected, {
+              type: "Polygon",
+              coordinates: [ringWithoutVertex(ring, vertex.index)],
+            });
+            return;
+          }
+        }
+      }
+      const lngLat = map.unproject([point.x, point.y]);
+      const hit = polygonAt(draw, map, point, [lngLat.lng, lngLat.lat]);
+      if (hit !== null) contextMenuRef.current({ kind: "feature", id: String(hit), x: event.clientX, y: event.clientY });
     };
     // Turns right-angle snap off while Control is held.
     const onKeyDown = (event: KeyboardEvent) => {

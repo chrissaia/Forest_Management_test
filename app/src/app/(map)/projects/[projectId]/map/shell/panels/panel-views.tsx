@@ -4,9 +4,8 @@
  * One command sidebar and one details sidebar for each map panel.
  */
 
-import { useMap, type MapPanel } from "../../map-context";
+import { type MapPanel } from "../../map-context";
 import { ActionCommand, ActionList } from "./action-command";
-import { ActionDetails } from "./action-details";
 import { ParcelCommand } from "./parcel-command";
 import { ParcelDetails } from "./parcel-details";
 import { SoilCommand } from "./soil-command";
@@ -54,7 +53,5 @@ export const panelViews: Record<MapPanel, PanelView> = {
 
 // The action list, or the open action. Closing the action returns to the list.
 function ActionPanel() {
-  const { selectedAction } = useMap();
-  if (selectedAction === null) return <ActionList />;
-  return <ActionDetails />;
+  return <ActionList />;
 }

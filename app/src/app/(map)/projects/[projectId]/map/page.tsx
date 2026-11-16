@@ -17,6 +17,7 @@ import { MapTopBar } from "./shell/map-top-bar";
 import { MapStage } from "./shell/map-stage";
 import { PanelBar } from "./shell/panel-bar";
 import { CommandSidebar } from "./shell/command-sidebar";
+import { MapContextMenu } from "./shell/map-context-menu";
 import { FeatureSidebar } from "./shell/feature-sidebar";
 import { DetailsSidebar } from "./shell/details-sidebar";
 import { MapToolbar } from "./shell/map-toolbar";
@@ -93,6 +94,7 @@ async function ProjectMap({
         <FeatureSidebar />
         <MapToolbar />
         <MapToolKeys />
+        <MapContextMenu />
       </main>
       </div>
     </MapProvider>

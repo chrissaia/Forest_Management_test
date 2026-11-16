@@ -84,7 +84,7 @@ function ActionHeader({
 }) {
   const { renameNewAction, setRenameNewAction } = useMap();
   return (
-    <header className="flex w-full shrink-0 items-center gap-2 border-b border-surface-translucent-placeholder px-2 py-4">
+    <header className="flex w-full shrink-0 items-center gap-2  px-2 py-2">
       <div className="min-w-0 flex-1">
         <SentenceField key={actionId} value={name} ariaLabel="Action name" onText={onName} autoEdit={renameNewAction === actionId} onEditFocus={() => { if (renameNewAction === actionId) setRenameNewAction(null); }} />
       </div>
@@ -117,7 +117,7 @@ function ActionDescription({
   onText: (change: TextFieldChange) => void;
 }) {
   return (
-    <section aria-label="Action description" className="shrink-0 p-2">
+    <section aria-label="Action description" className="shrink-0 px-2">
       <ParagraphField key={actionId} value={value} onText={onText} />
     </section>
   );
@@ -147,7 +147,7 @@ function ActionFeatures({
   });
 
   return (
-    <section aria-label="Action features" className="min-h-0 flex-1 overflow-y-auto py-2">
+    <section aria-label="Action features" className="min-h-0 flex-1 overflow-y-auto ">
       {rows.map((row) => (
         <FeatureListRow
           key={row.id}
