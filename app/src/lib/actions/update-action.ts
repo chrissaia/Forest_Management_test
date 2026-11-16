@@ -61,3 +61,11 @@ export async function createProjectAction(projectId: number) {
   if (error) throw new Error(error.message);
   return { id: data.id as number, name: data.name as string, description: data.description as string, editedAt: data.edited_at as string };
 }
+
+// Deletes an action and its cascading feature links, scoped by project membership.
+export async function deleteProjectAction(projectId: number, id: number) {
+  if (!Number.isInteger(projectId) || !Number.isInteger(id)) throw new Error("Invalid action.");
+  const supabase = await createClient();
+  const { error } = await supabase.from("actions").delete().eq("project_id", projectId).eq("id", id);
+  if (error) throw new Error(error.message);
+}

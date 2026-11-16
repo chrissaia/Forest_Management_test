@@ -53,7 +53,7 @@ export function ActionList({ featureId }: { featureId?: string } = {}) {
         <div ref={filterRef} className="relative ml-auto" onKeyDown={(event) => { if (event.key === "Escape") { setFilterOpen(false); filterRef.current?.querySelector("button")?.focus(); } }}>
           <button type="button" aria-label={activeFilterIds.length ? `Filter actions (${activeFilterIds.length} active)` : "Filter actions"} aria-expanded={filterOpen} aria-haspopup="dialog" onClick={() => setFilterOpen(!filterOpen)} className={`relative ${headerButtonClass}`}>
             <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 6h16M7 12h10M10 18h4" /></svg>
-            {activeFilterIds.length > 0 ? <span aria-hidden="true" className="absolute right-0.5 top-0.5 size-1.5 rounded-full bg-red-500 ring-2 ring-surface-canvas" /> : null}
+            {activeFilterIds.length > 0 ? <span aria-hidden="true" className="absolute right-0.5 top-0.5 size-1.5 rounded-full bg-red-500" /> : null}
           </button>
           {filterOpen ? <div role="dialog" aria-label="Filter actions by feature" className="absolute right-0 top-full z-30 mt-1 w-56 max-w-[80vw] rounded-[8px] border border-border-map bg-surface-canvas p-2 shadow-lg">
             <div className="flex items-center justify-between px-2 py-1"><p className="template-body-small text-text-secondary">Features</p><button type="button" onClick={() => setActionFilterIds([])} className="template-body-small cursor-pointer text-text-secondary hover:text-text-primary">Clear</button></div>
@@ -82,7 +82,6 @@ export function ActionList({ featureId }: { featureId?: string } = {}) {
       </div>
       {createError ? <p role="alert" className="template-body-small px-4 py-2 text-text-primary">{createError}</p> : null}
       <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto bg-transparent py-2">
-        {(activeFilterIds.length > 0 || actionQuery.trim() !== "") && visibleActions.length === 0 ? <p role="status" className="template-body-medium px-4 py-2 text-text-secondary">{actionQuery.trim() ? "No matching actions." : "No actions linked to this stand."}</p> : null}
         {visibleActions.map((action) => {
           const hovered = hoverAction === action.id;
           return (
@@ -99,7 +98,7 @@ export function ActionList({ featureId }: { featureId?: string } = {}) {
                 event.preventDefault();
                 setSelectedAction(action.id);
               }}
-              className={`flex w-full cursor-pointer flex-col items-start px-4 py-1 text-left transition-colors duration-200 ease-in-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary hover:bg-surface-translucent-placeholder-2 ${hovered ? "bg-surface-translucent-placeholder-2" : ""}`}
+              className={`group relative flex w-full cursor-pointer flex-col items-start px-4 py-1 pr-10 text-left transition-colors duration-200 ease-in-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary hover:bg-surface-translucent-placeholder-2 ${hovered ? "bg-surface-translucent-placeholder-2" : ""}`}
             >
               <p className="template-body-medium line-clamp-2 w-full text-text-primary">
                 {action.name}
@@ -124,6 +123,7 @@ export function ActionList({ featureId }: { featureId?: string } = {}) {
                 <span className="sr-only">edited </span>
                 {editedLabel(new Date(action.editedAt), new Date())}
               </p>
+              <ActionRowMenu id={action.id} name={action.name} />
             </div>
           );
         })}
@@ -140,12 +140,11 @@ export function ActionCommand() {
     setSelectedFeature,
     setTool,
     features,
-    linkedFeatureIds,
+    highlightedFeatureIds,
     toggleLinkedFeature,
     hoverFeature,
     setHoverFeature,
   } = useMap();
-  const linked = new Set(linkedFeatureIds);
   const [searching, setSearching] = useState(false);
   const [query, setQuery] = useState("");
   const searchButton = useRef<HTMLButtonElement>(null);
@@ -167,10 +166,11 @@ export function ActionCommand() {
 
   return (
     <>
-      <header className="flex h-11 shrink-0 items-center gap-1 border-b border-surface-translucent-placeholder p-2">
+      <header className="flex shrink-0 items-center gap-2 border-b border-surface-translucent-placeholder px-4 py-4">
         {searching ? (
-          <div className="flex min-w-0 flex-1 items-center rounded-[4px] bg-surface-canvas focus-within:outline-1 focus-within:outline-text-primary">
-            <img src="/icons/map/search-outline.svg" alt="" width={24} height={24} className="ml-1 shrink-0" />
+          <>
+          <div className="peer flex h-7 min-w-0 flex-1 items-center rounded-[4px] bg-surface-canvas focus-within:bg-surface-translucent-placeholder-2 focus-within:outline-1 focus-within:outline-text-primary">
+            <img src="/icons/map/search-outline.svg" alt="" width={18} height={18} className="ml-1 block shrink-0 translate-y-[0.5px]" />
             <input
               autoFocus
               aria-label="Search features"
@@ -183,25 +183,23 @@ export function ActionCommand() {
                   closeSearch();
                 }
               }}
-              className="template-body-small min-w-0 flex-1 border-0 bg-transparent px-1 py-1 text-text-primary outline-none placeholder:text-text-secondary"
+              className="template-body-small h-7 min-w-0 flex-1 border-0 bg-transparent px-1 py-0 leading-7 text-text-primary outline-none placeholder:text-text-secondary"
             />
-            <button type="button" aria-label="Close feature search" onClick={closeSearch} className="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-[4px] text-text-secondary transition-colors duration-200 ease-in-out hover:text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary">
-              <span aria-hidden="true" className="size-6 bg-current [mask-image:url(/icons/map/close-outline.svg)] [mask-position:center] [mask-repeat:no-repeat] [mask-size:contain]" />
-            </button>
           </div>
+            <button type="button" aria-label="Close feature search" onClick={closeSearch} className="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-[4px] text-text-primary transition-colors duration-200 ease-in-out hover:bg-surface-translucent-placeholder-2 outline-none">
+              <img src="/icons/map/close-outline.svg" alt="" width={18} height={18} />
+            </button>
+          </>
         ) : (
           <>
-            <p className="template-body-medium-emphasized min-w-0 flex-1 px-2 text-text-primary">{mapPanel.features}</p>
+            <p className="template-body-medium-emphasized min-w-0 flex-1 text-text-primary">{mapPanel.features}</p>
             <button ref={searchButton} type="button" aria-label="Search features" onClick={() => setSearching(true)} className={headerButtonClass}>
-              <img src="/icons/map/search-outline.svg" alt="" width={24} height={24} />
+              <img src="/icons/map/search-outline.svg" alt="" width={18} height={18} />
             </button>
           </>
         )}
       </header>
       <div className="min-h-0 flex-1 overflow-y-auto py-2">
-        {visibleFeatures.length === 0 ? (
-          <p role="status" className="template-body-medium px-4 py-2 text-text-secondary">No features found.</p>
-        ) : null}
         {visibleFeatures.map((feature) => {
           const id = String(feature.id);
           const name = typeof feature.properties.name === "string" ? feature.properties.name : id;
@@ -211,7 +209,9 @@ export function ActionCommand() {
               id={id}
               name={name}
               features={features}
-              pressed={linking ? linked.has(id) : selectedFeature === id}
+              pressed={selectedFeature === id}
+              linked={highlightedFeatureIds.includes(id)}
+              linking={linking}
               hovered={hoverFeature === id}
               onPress={() => {
                 if (linking) toggleLinkedFeature(id);
@@ -228,4 +228,38 @@ export function ActionCommand() {
       </div>
     </>
   );
+}
+
+function ActionRowMenu({ id, name }: { id: number; name: string }) {
+  const { deleteAction } = useMap();
+  const [open, setOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState(false);
+  const root = useRef<HTMLDivElement>(null);
+  const trigger = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    root.current?.querySelector<HTMLButtonElement>('[role="menuitem"]')?.focus();
+    const dismiss = (event: PointerEvent) => {
+      if (!root.current?.contains(event.target as Node)) setOpen(false);
+    };
+    document.addEventListener("pointerdown", dismiss);
+    return () => document.removeEventListener("pointerdown", dismiss);
+  }, [open]);
+  return <div ref={root} className={`absolute right-2 top-1/2 -translate-y-1/2 z-10 ${open ? "opacity-100" : "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100"}`} onClick={(event) => event.stopPropagation()} onKeyDown={(event) => {
+    event.stopPropagation();
+    if (event.key === "Escape") { setOpen(false); trigger.current?.focus(); }
+  }}>
+    <button ref={trigger} type="button" aria-label={`More options for ${name}`} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)} className={headerButtonClass}>
+      <svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="8" r="1.5"/><circle cx="8" cy="8" r="1.5"/><circle cx="13" cy="8" r="1.5"/></svg>
+    </button>
+    {open ? <div role="menu" aria-label={`Options for ${name}`} className="absolute right-0 top-full z-30 mt-1 min-w-32 rounded-[8px] border border-border-map bg-surface-canvas p-1 shadow-lg">
+      <button type="button" role="menuitem" disabled={deleting} onClick={async () => {
+        setDeleting(true); setError(false);
+        try { await deleteAction(id); }
+        catch { setError(true); setDeleting(false); }
+      }} className="template-body-small w-full cursor-pointer rounded-[4px] px-2 py-1 text-left text-red-600 hover:bg-surface-translucent-placeholder-2 focus-visible:outline-2 focus-visible:outline-border-selected disabled:opacity-50">{deleting ? "Deleting…" : "Delete"}</button>
+      {error ? <p role="alert" className="template-body-small px-2 py-1 text-text-secondary">Could not delete. Try again.</p> : null}
+    </div> : null}
+  </div>;
 }

@@ -36,16 +36,16 @@ const tools = [
   },
 ] as const;
 
-const cell = 52;
+const cell = 40;
 const springFrequency = 50;
 const tipDelayMs = 300;
 const tipBridgeMs = 80;
 const tipEase = "cubic-bezier(0.23, 1, 0.32, 1)";
 
 const toolbarMaterial =
-  "fixed top-4 left-1/2 z-20 -translate-x-1/2 bg-white/55 shadow-[0_8px_12px_6px_rgb(0_0_0/0.15),0_4px_4px_0_rgb(0_0_0/0.3)] outline outline-1 -outline-offset-1 outline-white/40 [backdrop-filter:blur(20px)_saturate(1.8)] [@media(prefers-contrast:more)]:outline-text-primary [@media(prefers-reduced-transparency:reduce)]:bg-surface-control [@media(prefers-reduced-transparency:reduce)]:shadow-none [@media(prefers-reduced-transparency:reduce)]:outline-border-map [@media(prefers-reduced-transparency:reduce)]:[backdrop-filter:none]";
+  "absolute top-2 left-1/2 z-20 -translate-x-1/2 bg-surface-canvas shadow-sm border border-border-map";
 
-type ToolId = (typeof tools)[number]["id"];
+type ToolId = (typeof tools)[number]["id"] | "actions" | "features" | "details";
 type Tip = { id: ToolId; animate: boolean };
 
 // The tool radio group and its sliding thumb.
@@ -80,11 +80,11 @@ export function MapToolbar() {
       role="radiogroup"
       aria-label="Map tools"
       onKeyDown={onKeyDown}
-      className={`flex rounded-[12px] ${toolbarMaterial}`}
+      className={`flex rounded-[8px] ${toolbarMaterial}`}
     >
       <span
         aria-hidden
-        className="pointer-events-none absolute top-1.5 left-1.5 size-10 rounded-[8px] bg-white shadow-[0_1px_2px_rgb(0_0_0/0.16),0_2px_6px_rgb(0_0_0/0.08)] will-change-transform [@media(prefers-reduced-transparency:reduce)]:bg-surface-canvas [@media(prefers-reduced-transparency:reduce)]:shadow-[0_0_0_1px_var(--border-map)]"
+        className={`pointer-events-none absolute top-1 left-1 size-8 rounded-[4px] will-change-transform ${linking ? "bg-map-action-linked" : "bg-border-selected"}`}
         style={{ transform: `translate3d(${thumbX}px,0,0)` }}
       />
       {tools.map((item) => {
@@ -107,14 +107,14 @@ export function MapToolbar() {
             onPointerDown={() => tip.dismiss(item.id)}
             onFocus={() => tip.show(item.id, false)}
             onBlur={() => tip.hide(item.id)}
-            className="relative z-10 flex size-[52px] shrink-0 cursor-pointer items-center justify-center rounded-[8px] transition-transform duration-100 ease-out select-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary active:scale-[0.97] motion-reduce:transition-none motion-reduce:active:scale-100"
+            className="relative z-10 flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-[8px] transition-transform duration-100 ease-out select-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary active:scale-[0.97] motion-reduce:transition-none motion-reduce:active:scale-100"
           >
             <img
               src={item.src}
               alt=""
-              width={item.width}
-              height={item.height}
-              className="max-w-none shrink-0"
+              width={Math.round(item.width * 0.75)}
+              height={Math.round(item.height * 0.75)}
+              className={`max-w-none shrink-0 ${selected ? "brightness-0 invert" : ""}`}
             />
             {tip.current?.id === item.id ? (
               <ToolTip
@@ -131,7 +131,7 @@ export function MapToolbar() {
 }
 
 // The open description, plus show, hide, and press-to-dismiss.
-function useToolTip() {
+export function useToolTip() {
   const [current, setCurrent] = useState<Tip | null>(null);
   const currentRef = useRef<Tip | null>(null);
   const openTimer = useRef<number | null>(null);
@@ -201,11 +201,13 @@ function useToolTip() {
 }
 
 // Name and shortcut, centered under the tool button.
-function ToolTip({
+export function ToolTip({
   label,
   shortcut,
   animate,
+  align = "center",
 }: {
+  align?: "center" | "right" | "left";
   label: string;
   shortcut: string;
   animate: boolean;
@@ -226,8 +228,10 @@ function ToolTip({
       role="tooltip"
       className="pointer-events-none absolute top-full left-1/2 z-30 mt-1 flex items-center gap-2 rounded-[6px] bg-white px-2 py-[3px] text-[11px] leading-4 font-medium whitespace-nowrap text-text-primary shadow-[0_2px_6px_rgb(0_0_0/0.35)]"
       style={{
+        left: align === "right" ? "auto" : align === "left" ? 0 : "50%",
+        right: align === "right" ? 0 : "auto",
         opacity: on ? 1 : 0,
-        transform: `translate3d(-50%, ${on ? 0 : 4}px, 0)`,
+        transform: `translate3d(${align === "center" ? "-50%" : "0"}, ${on ? 0 : 4}px, 0)`,
         transition: animate
           ? `opacity 150ms ${tipEase}, transform 150ms ${tipEase}`
           : "none",

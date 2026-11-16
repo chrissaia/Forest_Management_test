@@ -6,8 +6,8 @@ import { useSidebarWidth } from "./use-sidebar-width";
 
 // Stand details stay at the far right, beside the actions sidebar.
 export function FeatureSidebar() {
-  const { selectedFeature } = useMap();
-  const open = selectedFeature !== null;
+  const { selectedFeature, featureDetailsOpen } = useMap();
+  const open = selectedFeature !== null && featureDetailsOpen;
   const { asideRef, width, minWidth, onPointerDown, onPointerMove, onPointerUp } =
     useSidebarWidth("feature-details-sidebar-width", "end", open, "--map-feature-width");
 

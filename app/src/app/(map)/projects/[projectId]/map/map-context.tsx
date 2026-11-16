@@ -25,6 +25,8 @@ export const mapPanel: Record<MapPanel, string> = {
 };
 
 type MapContextValue = {
+  featureDetailsOpen: boolean;
+  setFeatureDetailsOpen: (open: boolean) => void;
   leftSidebarOpen: boolean;
   setLeftSidebarOpen: (open: boolean) => void;
   rightSidebarOpen: boolean;
@@ -49,6 +51,7 @@ type MapContextValue = {
   setHoverAction: (id: number | null) => void;
   actionFilterIds: string[];
   setActionFilterIds: (ids: string[]) => void;
+  deleteAction: (id: number) => Promise<void>;
   actions: ProjectAction[];
   createAction: (featureId?: string) => Promise<void>;
   renameNewAction: number | null;
@@ -81,8 +84,9 @@ export function MapProvider({
   initialActionFeatures?: ActionFeatureLink[];
   children: React.ReactNode;
 }) {
+  const [featureDetailsOpen, setFeatureDetailsOpenState] = useState(true);
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
-  const [rightSidebarOpen, setRightSidebarOpen] = useState(true);
+  const [rightSidebarOpen, setRightSidebarOpenState] = useState(true);
   const [tool, setToolState] = useState<MapTool>("pointer");
   const [panel, setPanelState] = useState<MapPanel>("features");
   const [linking, setLinkingState] = useState(false);
@@ -93,7 +97,7 @@ export function MapProvider({
   const [selectedAction, setSelectedActionState] = useState<number | null>(null);
   const [actionFilterIds, setActionFilterIds] = useState<string[]>([]);
   const [renameNewAction, setRenameNewAction] = useState<number | null>(null);
-  const { actions, renameAction, describeAction, createAction: insertAction } = useMapActions(projectId, initialActions);
+  const { actions, renameAction, describeAction, createAction: insertAction, deleteAction } = useMapActions(projectId, initialActions);
   const { links, toggleLinkedFeature: toggleActionFeature, linkFeature } = useActionFeatures(
     projectId,
     initialActionFeatures,
@@ -115,7 +119,6 @@ export function MapProvider({
       setPanelState("features");
     }
     setSelectedFeatureState(id);
-    setRightSidebarOpen(true);
     setRenameNewFeature(id);
     if (linkingAction !== null) {
       try {
@@ -132,9 +135,14 @@ export function MapProvider({
     setSelectedActionState(id);
     setLinkingState(false);
     setPanelState("actions");
-    setRightSidebarOpen(true);
     setRenameNewAction(id);
   };
+
+  const [detailsSelection, setDetailsSelection] = useState(selectedFeature);
+  if (detailsSelection !== selectedFeature) {
+    setDetailsSelection(selectedFeature);
+    if (selectedFeature !== null) setFeatureDetailsOpenState(true);
+  }
 
   const featureIds = features.map((feature) => String(feature.id));
   const selectedId = keptSelectedId(selectedFeature, featureIds);
@@ -153,12 +161,26 @@ export function MapProvider({
   const featureLinks = linkedFeatureIds(links, selectedAction, featureIds);
   const highlightedLinks = highlightedFeatureIds(links, selectedAction, hoverAction, featureIds);
 
+  const setFeatureDetailsOpen = (open: boolean) => {
+    setFeatureDetailsOpenState(open);
+    if (!open) setSelectedFeatureState(null);
+  };
+
+  // Hiding Actions also clears action selection and map highlights.
+  const setRightSidebarOpen = (open: boolean) => {
+    setRightSidebarOpenState(open);
+    if (!open) {
+      setSelectedActionState(null);
+      setHoverAction(null);
+      setLinkingState(false);
+    }
+  };
+
   // Any feature selection reveals its details, including reselecting the same feature.
   const setSelectedFeature = (id: string | null) => {
     setSelectedFeatureState(id);
     if (id !== null) {
       setPanelState("features");
-      setRightSidebarOpen(true);
     }
   };
 
@@ -197,6 +219,8 @@ export function MapProvider({
   return (
     <MapContext.Provider
       value={{
+        featureDetailsOpen,
+        setFeatureDetailsOpen,
         leftSidebarOpen,
         setLeftSidebarOpen,
         rightSidebarOpen,
@@ -221,6 +245,7 @@ export function MapProvider({
         setHoverAction,
         actionFilterIds,
         setActionFilterIds,
+        deleteAction,
         actions,
         createAction,
         renameNewAction,

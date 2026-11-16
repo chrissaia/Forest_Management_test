@@ -84,10 +84,11 @@ function ActionHeader({
 }) {
   const { renameNewAction, setRenameNewAction } = useMap();
   return (
-    <header className="flex w-full shrink-0 items-center gap-1 border-b border-surface-translucent-placeholder p-2">
+    <header className="flex w-full shrink-0 items-center gap-2 border-b border-surface-translucent-placeholder px-2 py-4">
       <div className="min-w-0 flex-1">
         <SentenceField key={actionId} value={name} ariaLabel="Action name" onText={onName} autoEdit={renameNewAction === actionId} onEditFocus={() => { if (renameNewAction === actionId) setRenameNewAction(null); }} />
       </div>
+      <div className="flex shrink-0 items-center gap-2 px-2">
       <button
         type="button"
         aria-label="Add keyframes"
@@ -95,11 +96,12 @@ function ActionHeader({
         onClick={onToggleFeatures}
         className={`${headerButtonClass} ${featuresOpen ? "bg-surface-translucent-placeholder-2" : ""}`}
       >
-        <img src="/icons/map/add-keyframes.svg" alt="" width={24} height={24} />
+        <img src="/icons/map/add-keyframes.svg" alt="" width={18} height={18} />
       </button>
       <button type="button" aria-label="Close action" onClick={onClose} className={headerButtonClass}>
-        <img src="/icons/map/close-outline.svg" alt="" width={24} height={24} />
+        <img src="/icons/map/close-outline.svg" alt="" width={18} height={18} />
       </button>
+      </div>
     </header>
   );
 }
@@ -153,6 +155,7 @@ function ActionFeatures({
           name={row.name}
           features={features}
           pressed={false}
+          linking
           hovered={hoverFeature === row.id}
           onRemove={() => onUnlink(row.id)}
           removeLabel={`Unlink ${row.name}`}

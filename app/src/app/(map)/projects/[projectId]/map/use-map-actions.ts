@@ -7,7 +7,7 @@
 
 import { useCallback, useRef, useState } from "react";
 import type { ProjectAction } from "@/lib/actions/actions";
-import { createProjectAction, describeProjectAction, renameProjectAction } from "@/lib/actions/update-action";
+import { deleteProjectAction, createProjectAction, describeProjectAction, renameProjectAction } from "@/lib/actions/update-action";
 
 // Holds the action list and queues one row write after each finished change.
 export function useMapActions(projectId: number, initialActions: ProjectAction[]) {
@@ -47,7 +47,15 @@ export function useMapActions(projectId: number, initialActions: ProjectAction[]
     return action.id;
   }, [projectId]);
 
-  return { actions, renameAction, describeAction, createAction };
+  const deleteAction = useCallback(async (id: number) => {
+    await saveQueue.current;
+    await deleteProjectAction(projectId, id);
+    const next = actionsRef.current.filter((action) => action.id !== id);
+    actionsRef.current = next;
+    setActions(next);
+  }, [projectId]);
+
+  return { actions, renameAction, describeAction, createAction, deleteAction };
 }
 
 function replaceAction(

@@ -15,6 +15,8 @@ export function FeatureListRow({
   features,
   pressed,
   hovered,
+  linked = false,
+  linking = false,
   onPress,
   onRemove,
   removeLabel,
@@ -26,6 +28,8 @@ export function FeatureListRow({
   features: GeoJSONStoreFeatures[];
   pressed: boolean;
   hovered: boolean;
+  linked?: boolean;
+  linking?: boolean;
   onPress?: () => void;
   onRemove?: () => void;
   removeLabel?: string;
@@ -41,7 +45,7 @@ export function FeatureListRow({
       onMouseLeave={onHoverEnd}
       onClick={onPress}
       onKeyDown={onPress ? (event) => onRowKey(event, onPress) : undefined}
-      className={`group flex w-full items-center gap-2.5 overflow-hidden px-4 text-left transition-colors duration-200 ease-in-out ${onPress ? "cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-selected" : ""} ${pressed ? "bg-surface-selected hover:bg-surface-selected" : `hover:bg-surface-translucent-placeholder-2 ${hovered ? "bg-surface-translucent-placeholder-2" : ""}`}`}
+      className={`group flex w-full items-center gap-2.5 overflow-hidden px-4 text-left transition-colors duration-200 ease-in-out ${onPress ? "cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-selected" : ""} ${linking && hovered ? "bg-surface-translucent-placeholder-2 hover:bg-surface-translucent-placeholder-2" : linking && (pressed || linked) ? "bg-surface-action-linked hover:bg-surface-translucent-placeholder-2" : pressed || hovered ? "bg-surface-selected hover:bg-surface-selected" : `${linking ? "hover:bg-surface-translucent-placeholder-2" : "hover:bg-surface-selected"} ${linked ? "bg-surface-action-linked" : ""}`}`}
     >
       <span
         aria-hidden="true"
@@ -57,12 +61,9 @@ export function FeatureListRow({
           }}
           className="hidden size-3 shrink-0 cursor-pointer items-center justify-center text-surface-header transition-colors duration-200 ease-in-out group-hover:flex hover:text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary"
         >
-          <span
-            aria-hidden="true"
-            className="flex size-3 -translate-y-[2.56px] items-center justify-center overflow-hidden text-[24px] leading-none font-extralight tracking-normal"
-          >
-            ×
-          </span>
+          <svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" className="block shrink-0">
+            <path d="m2.5 2.5 7 7m0-7-7 7" />
+          </svg>
         </button>
       ) : null}
       <div className="min-w-0 flex-1">

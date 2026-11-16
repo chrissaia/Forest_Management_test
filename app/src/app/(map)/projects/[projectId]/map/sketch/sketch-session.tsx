@@ -557,12 +557,30 @@ export function SketchSession({
   useEffect(() => {
     if (!ready || !draw) return;
     const paint = mapPaint();
+    const activeColor = linking ? mapColor(getComputedStyle(document.documentElement), "--map-action-linked", "#eab308") : paint.polygon;
     draw.updateModeOptions<typeof TerraDrawSelectMode>("select", {
       styles: {
-        selectedPolygonColor: (feature) => selectedFillColor(paint, feature.id, hoverFeature),
+        selectedPolygonColor: (feature) => linking ? activeColor : selectedFillColor(paint, feature.id, hoverFeature),
+        selectedPolygonOutlineColor: activeColor,
       },
     });
-  }, [draw, ready, hoverFeature]);
+    draw.updateModeOptions<typeof TerraDrawPolygonMode>("polygon", {
+      styles: {
+        fillColor: (feature) => feature.properties.currentlyDrawing === true ? activeColor : paint.muted,
+        outlineColor: (feature) => feature.properties.currentlyDrawing === true ? activeColor : paint.muted,
+        closingPointOutlineColor: activeColor,
+        snappingPointColor: activeColor,
+      },
+    });
+    if (map?.style?._loaded) {
+      for (const layer of [hoverLineLayerId, selectedLineLayerId]) {
+        if (map.getLayer(layer)) map.setPaintProperty(layer, "line-color", activeColor);
+      }
+      for (const [layer, property] of [[actionLinkFillLayerId, "fill-color"], [actionLinkLineLayerId, "line-color"]] as const) {
+        if (map.getLayer(layer)) map.setPaintProperty(layer, property, ["case", ["==", ["get", "hovered"], true], activeColor, mapColor(getComputedStyle(document.documentElement), "--map-action-linked", "#eab308")]);
+      }
+    }
+  }, [map, draw, ready, hoverFeature, linking]);
 
   // A sidebar delete drops the id from the list. TerraDraw still has that polygon until this removes it.
   useEffect(() => {
@@ -697,8 +715,8 @@ function mapPaint(): MapPaint {
 }
 
 // One hex color from a CSS variable, or an error when it is missing.
-function mapColor(style: CSSStyleDeclaration, name: string) {
-  const value = style.getPropertyValue(name).trim();
+function mapColor(style: CSSStyleDeclaration, name: string, fallback?: `#${string}`) {
+  const value = style.getPropertyValue(name).trim() || fallback || "";
   if (!value.startsWith("#")) {
     throw new Error(`Missing map color ${name}.`);
   }
@@ -775,6 +793,7 @@ function installActionLinks(
 ) {
   let stopped = false;
   const paint = mapPaint();
+  const linkedColor = mapColor(getComputedStyle(document.documentElement), "--map-action-linked", "#eab308");
   const sync = () => {
     if (!map.style?._loaded) return;
     const data = readData();
@@ -799,7 +818,7 @@ function installActionLinks(
         type: "fill",
         source: actionLinkFillLayerId,
         paint: {
-          "fill-color": ["case", ["==", ["get", "hovered"], true], paint.muted, paint.polygon],
+          "fill-color": ["case", ["==", ["get", "hovered"], true], paint.polygon, linkedColor],
           "fill-opacity": actionLinkFillOpacity,
         },
       });
@@ -810,7 +829,7 @@ function installActionLinks(
         type: "line",
         source: actionLinkLineLayerId,
         paint: {
-          "line-color": ["case", ["==", ["get", "hovered"], true], paint.muted, paint.polygon],
+          "line-color": ["case", ["==", ["get", "hovered"], true], paint.polygon, linkedColor],
           "line-width": lineWidth,
         },
       });
