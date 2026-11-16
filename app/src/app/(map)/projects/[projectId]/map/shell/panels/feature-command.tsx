@@ -3,6 +3,7 @@
 /*
  * The features command sidebar.
  * A row selects that polygon. Hovering a row hovers it on the map.
+ * Hovering a row also shows an X that deletes that polygon.
  */
 
 import { useEffect } from "react";
@@ -11,7 +12,7 @@ import { FeatureName } from "../feature-name";
 
 // The feature list for the open map.
 export function FeatureCommand() {
-  const { features, selectedFeature, setSelectedFeature, hoverFeature, setHoverFeature, setTool } = useMap();
+  const { features, selectedFeature, setSelectedFeature, hoverFeature, setHoverFeature, setTool, deleteFeature } = useMap();
 
   useEffect(() => {
     return () => setHoverFeature(null);
@@ -49,12 +50,28 @@ export function FeatureCommand() {
                 setTool("pointer");
                 setSelectedFeature(id);
               }}
-              className={`flex w-full cursor-pointer items-center gap-2.5 overflow-hidden px-4 text-left transition-colors duration-200 ease-in-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary hover:bg-surface-translucent-placeholder-2 ${selected || hovered ? "bg-surface-translucent-placeholder-2" : ""}`}
+              className={`group flex w-full cursor-pointer items-center gap-2.5 overflow-hidden px-4 text-left transition-colors duration-200 ease-in-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary hover:bg-surface-translucent-placeholder-2 ${selected || hovered ? "bg-surface-translucent-placeholder-2" : ""}`}
             >
               <span
                 aria-hidden="true"
-                className="size-3.5 shrink-0 bg-surface-header [mask-image:url(/icons/map/pentagon.svg)] [mask-position:center] [mask-repeat:no-repeat] [mask-size:contain]"
+                className="size-3.5 shrink-0 bg-surface-header [mask-image:url(/icons/map/pentagon.svg)] [mask-position:center] [mask-repeat:no-repeat] [mask-size:contain] group-hover:hidden"
               />
+              <button
+                type="button"
+                aria-label={`Remove ${name}`}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  deleteFeature(id);
+                }}
+                className="hidden size-3.5 shrink-0 cursor-pointer items-center justify-center text-surface-header transition-colors duration-200 ease-in-out group-hover:flex hover:text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary"
+              >
+                <span
+                  aria-hidden="true"
+                  className="flex size-3.5 -translate-y-[2.56px] items-center justify-center overflow-hidden text-[24px] leading-none font-extralight tracking-normal"
+                >
+                  ×
+                </span>
+              </button>
               <div className="min-w-0 flex-1">
                 <FeatureName
                   id={id}

@@ -4,8 +4,8 @@
  * One command sidebar and one details sidebar for each map panel.
  */
 
-import type { MapPanel } from "../../map-context";
-import { ActionCommand } from "./action-command";
+import { useMap, type MapPanel } from "../../map-context";
+import { ActionCommand, ActionList } from "./action-command";
 import { ActionDetails } from "./action-details";
 import { FeatureCommand } from "./feature-command";
 import { FeatureDetails } from "./feature-details";
@@ -17,11 +17,13 @@ import { SoilDetails } from "./soil-details";
 type PanelSelection = {
   feature: string | null;
   action: number | null;
+  linking: boolean;
 };
 
 type PanelView = {
   Command: () => React.JSX.Element | null;
   Details: () => React.JSX.Element | null;
+  commandOpen: (selection: PanelSelection) => boolean;
   detailsOpen: (selection: PanelSelection) => boolean;
 };
 
@@ -29,21 +31,32 @@ export const panelViews: Record<MapPanel, PanelView> = {
   features: {
     Command: FeatureCommand,
     Details: FeatureDetails,
+    commandOpen: () => true,
     detailsOpen: ({ feature }) => feature !== null,
   },
   actions: {
     Command: ActionCommand,
-    Details: ActionDetails,
-    detailsOpen: ({ action }) => action !== null,
+    Details: ActionPanel,
+    commandOpen: ({ linking }) => linking,
+    detailsOpen: () => true,
   },
   soils: {
     Command: SoilCommand,
     Details: SoilDetails,
+    commandOpen: () => true,
     detailsOpen: () => false,
   },
   parcels: {
     Command: ParcelCommand,
     Details: ParcelDetails,
+    commandOpen: () => true,
     detailsOpen: () => false,
   },
 };
+
+// The action list, or the open action. Closing the action returns to the list.
+function ActionPanel() {
+  const { selectedAction } = useMap();
+  if (selectedAction === null) return <ActionList />;
+  return <ActionDetails />;
+}

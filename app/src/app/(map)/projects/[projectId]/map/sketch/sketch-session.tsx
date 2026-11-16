@@ -30,6 +30,7 @@ import {
 } from "./kinds/polygon/create";
 import { beginReshape, ringWithoutVertex, vertexAtPointer } from "./kinds/polygon/edit";
 import {
+  clickSlop,
   pointerDistance,
   selectedSnapshotId,
   selectionFromHits,
@@ -59,6 +60,13 @@ import {
   selectionLineData,
 } from "./sync-selection";
 import { hoverLineCollection, hoverLineLayerId } from "./sync-hover";
+import {
+  actionLinkCollections,
+  actionLinkFillLayerId,
+  actionLinkFillOpacity,
+  actionLinkLineLayerId,
+  emptyActionLinks,
+} from "./sync-action-links";
 
 // UUID ids for features TerraDraw creates.
 const featureIds = {
@@ -84,6 +92,9 @@ export function SketchSession({
     setSelectedFeature,
     hoverFeature,
     setHoverFeature,
+    linking,
+    highlightedFeatureIds,
+    toggleLinkedFeature,
   } = useMap();
   const toolRef = useRef<MapTool>(tool);
   const insertRef = useRef(insertFeature);
@@ -93,8 +104,12 @@ export function SketchSession({
   const setHoverRef = useRef(setHoverFeature);
   const hoverRef = useRef<string | null>(null);
   const selectedRef = useRef(selectedFeature);
+  const linkingRef = useRef(linking);
+  const linkedRef = useRef(highlightedFeatureIds);
+  const toggleLinkedRef = useRef(toggleLinkedFeature);
   const featuresRef = useRef(features);
   featuresRef.current = features;
+  const storedIdsRef = useRef<string[]>([]);
   const [draw, setDraw] = useState<TerraDrawInstance | null>(null);
   const reshapeRef = useRef(false);
   const suppressRef = useRef(false);
@@ -133,6 +148,18 @@ export function SketchSession({
   useEffect(() => {
     selectedRef.current = selectedFeature;
   }, [selectedFeature]);
+
+  useEffect(() => {
+    linkingRef.current = linking;
+  }, [linking]);
+
+  useEffect(() => {
+    linkedRef.current = highlightedFeatureIds;
+  }, [highlightedFeatureIds]);
+
+  useEffect(() => {
+    toggleLinkedRef.current = toggleLinkedFeature;
+  }, [toggleLinkedFeature]);
 
   useEffect(() => {
     if (!map) return;
@@ -279,6 +306,7 @@ export function SketchSession({
     };
     // Closes an open ring or starts reshape on the polygon under the pointer.
     const onDoubleClick = (event: MouseEvent) => {
+      if (linkingRef.current) return;
       const gesture = pointerGesture({
         kind: "double-click",
         tool: toolRef.current,
@@ -327,6 +355,14 @@ export function SketchSession({
       const point = containerPoint(host, event);
       const lngLat = map.unproject([point.x, point.y]);
       const hit = polygonAt(draw, map, point, [lngLat.lng, lngLat.lat]);
+      if (linkingRef.current) {
+        if (event.detail > 1) return;
+        const dragged = pointerDown ? Math.hypot(point.x - pointerDown.x, point.y - pointerDown.y) : 0;
+        if (event.button !== 0 || dragged > clickSlop) return;
+        if (hit === null) return;
+        toggleLinkedRef.current(String(hit));
+        return;
+      }
       const decision = selectCommand({
         tool: toolRef.current,
         button: event.button,
@@ -528,6 +564,16 @@ export function SketchSession({
     });
   }, [draw, ready, hoverFeature]);
 
+  // A sidebar delete drops the id from the list. TerraDraw still has that polygon until this removes it.
+  useEffect(() => {
+    if (!ready || !draw) return;
+    const current = features.map((feature) => String(feature.id));
+    const currentIds = new Set(current);
+    const removed = storedIdsRef.current.filter((id) => !currentIds.has(id) && draw.hasFeature(id));
+    storedIdsRef.current = current;
+    if (removed.length > 0) draw.removeFeatures(removed);
+  }, [features, draw, ready]);
+
   useEffect(() => {
     if (!ready || !draw || tool !== "pointer") return;
     const current = selectionId(draw);
@@ -539,6 +585,40 @@ export function SketchSession({
     if (action === "deselect" && current !== null) draw.deselectFeature(current);
     if (action === "select" && selectedFeature !== null) draw.selectFeature(selectedFeature);
   }, [draw, ready, selectedFeature, tool]);
+
+  useEffect(() => {
+    if (!ready || !draw) return;
+    draw.updateModeOptions<typeof TerraDrawSelectMode>("select", {
+      allowManualDeselection: !linking,
+    });
+  }, [draw, ready, linking]);
+
+  useEffect(() => {
+    if (!map || !ready || !draw) return;
+    return installActionLinks(map, draw, () =>
+      actionLinkCollections(
+        draw.getSnapshot(),
+        linkedRef.current,
+        selectedRef.current,
+        hoverRef.current,
+      ),
+    );
+  }, [map, ready, draw]);
+
+  useEffect(() => {
+    if (!map || !ready || !draw || !map.style?._loaded) return;
+    const data = actionLinkCollections(
+      draw.getSnapshot(),
+      highlightedFeatureIds,
+      selectedFeature,
+      hoverFeature,
+    );
+    const fill = lineSource(map, actionLinkFillLayerId);
+    const line = lineSource(map, actionLinkLineLayerId);
+    if (fill) fill.setData(data.fill);
+    if (line) line.setData(data.line);
+    raiseActionLinks(map);
+  }, [map, ready, draw, highlightedFeatureIds, selectedFeature, hoverFeature, features]);
 
   if (!map || !container || !ready || !draw) return null;
 
@@ -680,11 +760,86 @@ function committedCount(draw: TerraDrawInstance) {
   return typeof count === "number" ? count : 0;
 }
 
-// The GeoJSON source for a hover or selection line.
+// The GeoJSON source for a hover, selection, or action-link layer.
 function lineSource(map: MapLibreMap, id: string) {
   const source = map.getSource(id);
   if (!source || source.type !== "geojson") return null;
   return source as GeoJSONSource;
+}
+
+// Adds the linked-feature fill and line, and keeps them under the hover and selection strokes.
+function installActionLinks(
+  map: MapLibreMap,
+  draw: TerraDrawInstance,
+  readData: () => ReturnType<typeof actionLinkCollections>,
+) {
+  let stopped = false;
+  const paint = mapPaint();
+  const sync = () => {
+    if (!map.style?._loaded) return;
+    const data = readData();
+    const fill = lineSource(map, actionLinkFillLayerId);
+    const line = lineSource(map, actionLinkLineLayerId);
+    if (fill) fill.setData(data.fill);
+    if (line) line.setData(data.line);
+    raiseActionLinks(map);
+  };
+  const mount = () => {
+    if (stopped || !map.style?._loaded) return;
+    const empty = emptyActionLinks();
+    if (!map.getSource(actionLinkFillLayerId)) {
+      map.addSource(actionLinkFillLayerId, { type: "geojson", data: empty.fill });
+    }
+    if (!map.getSource(actionLinkLineLayerId)) {
+      map.addSource(actionLinkLineLayerId, { type: "geojson", data: empty.line });
+    }
+    if (!map.getLayer(actionLinkFillLayerId)) {
+      map.addLayer({
+        id: actionLinkFillLayerId,
+        type: "fill",
+        source: actionLinkFillLayerId,
+        paint: {
+          "fill-color": ["case", ["==", ["get", "hovered"], true], paint.muted, paint.polygon],
+          "fill-opacity": actionLinkFillOpacity,
+        },
+      });
+    }
+    if (!map.getLayer(actionLinkLineLayerId)) {
+      map.addLayer({
+        id: actionLinkLineLayerId,
+        type: "line",
+        source: actionLinkLineLayerId,
+        paint: {
+          "line-color": ["case", ["==", ["get", "hovered"], true], paint.muted, paint.polygon],
+          "line-width": lineWidth,
+        },
+      });
+    }
+    sync();
+  };
+  map.on("style.load", mount);
+  mount();
+  draw.on("change", sync);
+  draw.on("finish", sync);
+  return () => {
+    stopped = true;
+    map.off("style.load", mount);
+    draw.off("change", sync);
+    draw.off("finish", sync);
+    if (!map.style?._loaded) return;
+    if (map.getLayer(actionLinkFillLayerId)) map.removeLayer(actionLinkFillLayerId);
+    if (map.getLayer(actionLinkLineLayerId)) map.removeLayer(actionLinkLineLayerId);
+    if (map.getSource(actionLinkFillLayerId)) map.removeSource(actionLinkFillLayerId);
+    if (map.getSource(actionLinkLineLayerId)) map.removeSource(actionLinkLineLayerId);
+  };
+}
+
+// Puts the link paint above polygons and under the hover and selection lines.
+function raiseActionLinks(map: MapLibreMap) {
+  if (map.getLayer(actionLinkFillLayerId)) map.moveLayer(actionLinkFillLayerId);
+  if (map.getLayer(actionLinkLineLayerId)) map.moveLayer(actionLinkLineLayerId);
+  if (map.getLayer(hoverLineLayerId)) map.moveLayer(hoverLineLayerId);
+  if (map.getLayer(selectedLineLayerId)) map.moveLayer(selectedLineLayerId);
 }
 
 // Projects a longitude and latitude to map pixels.

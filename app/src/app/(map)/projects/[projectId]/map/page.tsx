@@ -7,6 +7,7 @@ import { connection } from "next/server";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { getProjectActions } from "@/lib/actions/actions";
+import { getActionFeatures } from "@/lib/actions/action-features";
 import { getMap } from "@/lib/maps/maps";
 import type { MapFeature } from "@/lib/maps/map-features";
 import { getProject } from "@/lib/projects/projects";
@@ -62,7 +63,10 @@ async function ProjectMap({
   if (!map) {
     notFound();
   }
-  const actions = await getProjectActions(id, supabase);
+  const [actions, actionFeatures] = await Promise.all([
+    getProjectActions(id, supabase),
+    getActionFeatures(id, supabase),
+  ]);
 
   return (
     <MapProvider
@@ -70,6 +74,7 @@ async function ProjectMap({
       projectId={id}
       initialFeatures={sketchFeatures(map.features)}
       initialActions={actions}
+      initialActionFeatures={actionFeatures}
     >
       <main className="relative min-h-0 min-w-0 flex-1 overflow-hidden">
         <MapStage

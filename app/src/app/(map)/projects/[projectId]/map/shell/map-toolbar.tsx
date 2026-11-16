@@ -42,15 +42,20 @@ const tipDelayMs = 300;
 const tipBridgeMs = 80;
 const tipEase = "cubic-bezier(0.23, 1, 0.32, 1)";
 
+const toolbarMaterial =
+  "fixed top-4 left-1/2 z-20 -translate-x-1/2 bg-white/55 shadow-[0_8px_12px_6px_rgb(0_0_0/0.15),0_4px_4px_0_rgb(0_0_0/0.3)] outline outline-1 -outline-offset-1 outline-white/40 [backdrop-filter:blur(20px)_saturate(1.8)] [@media(prefers-contrast:more)]:outline-text-primary [@media(prefers-reduced-transparency:reduce)]:bg-surface-control [@media(prefers-reduced-transparency:reduce)]:shadow-none [@media(prefers-reduced-transparency:reduce)]:outline-border-map [@media(prefers-reduced-transparency:reduce)]:[backdrop-filter:none]";
+
 type ToolId = (typeof tools)[number]["id"];
 type Tip = { id: ToolId; animate: boolean };
 
 // The tool radio group and its sliding thumb.
 export function MapToolbar() {
-  const { tool, setTool } = useMap();
+  const { tool, setTool, linking } = useMap();
   const index = tools.findIndex((item) => item.id === tool);
   const thumbX = useCriticallyDamped(index * cell);
   const tip = useToolTip();
+
+  if (linking) return null;
 
   // Moves the tool with the arrow keys.
   function onKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
@@ -75,7 +80,7 @@ export function MapToolbar() {
       role="radiogroup"
       aria-label="Map tools"
       onKeyDown={onKeyDown}
-      className="fixed top-4 left-1/2 z-20 flex -translate-x-1/2 rounded-[12px] bg-white/55 shadow-[0_8px_12px_6px_rgb(0_0_0/0.15),0_4px_4px_0_rgb(0_0_0/0.3)] outline outline-1 -outline-offset-1 outline-white/40 [backdrop-filter:blur(20px)_saturate(1.8)] [@media(prefers-contrast:more)]:outline-text-primary [@media(prefers-reduced-transparency:reduce)]:bg-surface-control [@media(prefers-reduced-transparency:reduce)]:shadow-none [@media(prefers-reduced-transparency:reduce)]:outline-border-map [@media(prefers-reduced-transparency:reduce)]:[backdrop-filter:none]"
+      className={`flex rounded-[12px] ${toolbarMaterial}`}
     >
       <span
         aria-hidden

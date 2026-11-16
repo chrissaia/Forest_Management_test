@@ -2,53 +2,164 @@
 
 /*
  * Details for the selected action.
- * The sidebar frame keeps this unmounted until an action selection exists.
+ * The right sidebar shows this in place of the action list.
  */
 
 import { ParagraphField } from "@/app/components/texts/paragraph-field";
 import { SentenceField } from "@/app/components/texts/sentence-field";
 import type { TextFieldChange } from "@/app/components/texts/text-field-change";
 import { useMap } from "../../map-context";
+import { FeatureListRow } from "./feature-list-row";
 
-// Name and description for the selected action.
+const headerButtonClass =
+  "flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-[4px] text-text-primary transition-colors duration-200 ease-in-out hover:bg-surface-translucent-placeholder-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary";
+
+// Name, then either the description or the feature list.
 export function ActionDetails() {
-  const { actions, selectedAction, setSelectedAction, renameAction, describeAction } = useMap();
+  const {
+    actions,
+    features,
+    selectedAction,
+    setSelectedAction,
+    renameAction,
+    describeAction,
+    linking,
+    setLinking,
+    linkedFeatureIds,
+    toggleLinkedFeature,
+    hoverFeature,
+    setHoverFeature,
+  } = useMap();
+
   if (selectedAction === null) return null;
 
   const action = actions.find((item) => item.id === selectedAction);
   if (!action) return null;
 
   return (
-    <div className="flex w-full shrink-0 flex-col border-b border-surface-translucent-placeholder p-2">
-      <div className="flex w-full items-center gap-1">
-        <div className="min-w-0 flex-1">
-          <SentenceField
-            key={selectedAction}
-            value={action.name}
-            ariaLabel="Action name"
-            onText={(change) => saveName(action.id, action.name, change, renameAction)}
-          />
-        </div>
-        <button
-          type="button"
-          aria-label="Close action"
-          onClick={() => setSelectedAction(null)}
-          className="ml-auto flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-[4px] text-text-primary transition-colors duration-200 ease-in-out hover:bg-surface-translucent-placeholder-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary"
-        >
-          <span
-            aria-hidden="true"
-            className="flex size-3.5 -translate-y-[2.56px] items-center justify-center overflow-hidden text-[24px] leading-none font-extralight tracking-normal"
-          >
-            ×
-          </span>
-        </button>
-      </div>
-      <ParagraphField
-        key={selectedAction}
-        value={action.description}
-        onText={(change) => saveDescription(action.id, change, describeAction)}
+    <div className="flex h-full min-h-0 w-full flex-col">
+      <ActionHeader
+        actionId={action.id}
+        name={action.name}
+        featuresOpen={linking}
+        onToggleFeatures={() => setLinking(!linking)}
+        onClose={() => setSelectedAction(null)}
+        onName={(change) => saveName(action.id, action.name, change, renameAction)}
       />
+      {linking ? (
+        <ActionFeatures
+          features={features}
+          linkedFeatureIds={linkedFeatureIds}
+          hoverFeature={hoverFeature}
+          onUnlink={toggleLinkedFeature}
+          onHoverStart={setHoverFeature}
+          onHoverEnd={() => setHoverFeature(null)}
+        />
+      ) : (
+        <ActionDescription
+          actionId={action.id}
+          value={action.description}
+          onText={(change) => saveDescription(action.id, change, describeAction)}
+        />
+      )}
     </div>
+  );
+}
+
+// The action title and its header buttons.
+function ActionHeader({
+  actionId,
+  name,
+  featuresOpen,
+  onToggleFeatures,
+  onClose,
+  onName,
+}: {
+  actionId: number;
+  name: string;
+  featuresOpen: boolean;
+  onToggleFeatures: () => void;
+  onClose: () => void;
+  onName: (change: TextFieldChange) => void;
+}) {
+  return (
+    <header className="flex w-full shrink-0 items-center gap-1 border-b border-surface-translucent-placeholder p-2">
+      <div className="min-w-0 flex-1">
+        <SentenceField key={actionId} value={name} ariaLabel="Action name" onText={onName} />
+      </div>
+      <button
+        type="button"
+        aria-label="Add keyframes"
+        aria-pressed={featuresOpen}
+        onClick={onToggleFeatures}
+        className={`${headerButtonClass} ${featuresOpen ? "bg-surface-translucent-placeholder-2" : ""}`}
+      >
+        <img src="/icons/map/add-keyframes.svg" alt="" width={24} height={24} />
+      </button>
+      <button type="button" aria-label="Close action" onClick={onClose} className={headerButtonClass}>
+        <img src="/icons/map/close-outline.svg" alt="" width={24} height={24} />
+      </button>
+    </header>
+  );
+}
+
+// The description under the header.
+function ActionDescription({
+  actionId,
+  value,
+  onText,
+}: {
+  actionId: number;
+  value: string;
+  onText: (change: TextFieldChange) => void;
+}) {
+  return (
+    <section aria-label="Action description" className="shrink-0 p-2">
+      <ParagraphField key={actionId} value={value} onText={onText} />
+    </section>
+  );
+}
+
+// Features linked to this action. The X removes the link.
+function ActionFeatures({
+  features,
+  linkedFeatureIds,
+  hoverFeature,
+  onUnlink,
+  onHoverStart,
+  onHoverEnd,
+}: {
+  features: ReturnType<typeof useMap>["features"];
+  linkedFeatureIds: string[];
+  hoverFeature: string | null;
+  onUnlink: (id: string) => void;
+  onHoverStart: (id: string) => void;
+  onHoverEnd: () => void;
+}) {
+  const rows = linkedFeatureIds.flatMap((id) => {
+    const feature = features.find((item) => String(item.id) === id);
+    if (!feature) return [];
+    const name = typeof feature.properties.name === "string" ? feature.properties.name : id;
+    return [{ id, name }];
+  });
+
+  return (
+    <section aria-label="Action features" className="min-h-0 flex-1 overflow-y-auto py-2">
+      {rows.map((row) => (
+        <FeatureListRow
+          key={row.id}
+          id={row.id}
+          name={row.name}
+          features={features}
+          pressed={false}
+          hovered={hoverFeature === row.id}
+          onRemove={() => onUnlink(row.id)}
+          removeLabel={`Unlink ${row.name}`}
+          onHoverStart={() => onHoverStart(row.id)}
+          onHoverEnd={onHoverEnd}
+        />
+      ))}
+    </section>
   );
 }
 

@@ -12,7 +12,9 @@ import { useSidebarWidth } from "./use-sidebar-width";
 
 // The left sidebar. Its contents follow the selected panel.
 export function CommandSidebar() {
-  const { panel } = useMap();
+  const { panel, linking, selectedFeature, selectedAction } = useMap();
+  const view = panelViews[panel];
+  const open = view.commandOpen({ feature: selectedFeature, action: selectedAction, linking });
   const {
     asideRef,
     width,
@@ -20,8 +22,11 @@ export function CommandSidebar() {
     onPointerDown,
     onPointerMove,
     onPointerUp,
-  } = useSidebarWidth("map-sidebar-width", "start");
-  const Command = panelViews[panel].Command;
+  } = useSidebarWidth("map-sidebar-width", "start", open);
+
+  if (!open) return null;
+
+  const Command = view.Command;
 
   return (
     <aside

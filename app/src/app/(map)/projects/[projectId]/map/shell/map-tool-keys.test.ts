@@ -3,7 +3,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { toolForKey } from "./map-tool-keys";
+import { exitsLinking, toolForKey } from "./map-tool-keys";
 
 describe("map tool keys", () => {
   it("selects pointer, polygon, and point from lowercase keys", () => {
@@ -17,5 +17,12 @@ describe("map tool keys", () => {
     expect(toolForKey("P")).toBeNull();
     expect(toolForKey("J")).toBeNull();
     expect(toolForKey("a")).toBeNull();
+  });
+
+  it("leaves link mode on Enter and Escape", () => {
+    expect(exitsLinking("Enter")).toBe(true);
+    expect(exitsLinking("Escape")).toBe(true);
+    expect(exitsLinking(" ")).toBe(false);
+    expect(exitsLinking("v")).toBe(false);
   });
 });

@@ -18,7 +18,7 @@ type ActionRow = {
   edited_at: string;
 };
 
-// The project's actions in plan order. Stand links are not loaded.
+// The project's actions in plan order. Feature links are not loaded.
 export async function getProjectActions(
   projectId: number,
   supabase: SupabaseClient,
