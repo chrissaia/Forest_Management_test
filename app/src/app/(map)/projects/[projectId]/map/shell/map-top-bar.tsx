@@ -24,7 +24,6 @@ export function MapTopBar() {
     <div role="toolbar" aria-label="Map sidebars" className="flex h-8 shrink-0 items-center justify-between border-b border-border-map bg-surface-canvas px-2">
       <SidebarToggle side="left" open={leftSidebarOpen} onToggle={() => setLeftSidebarOpen(!leftSidebarOpen)} />
       <div className="flex items-center gap-2">
-        <SidebarToggle side="right" open={rightSidebarOpen} onToggle={() => setRightSidebarOpen(!rightSidebarOpen)} />
         <button type="button" aria-label="Toggle feature details" aria-keyshortcuts="D"
           onPointerEnter={() => detailsTip.show("details", true)} onPointerLeave={() => detailsTip.hide("details")}
           onFocus={() => detailsTip.show("details", false)} onBlur={() => detailsTip.hide("details")}
@@ -35,6 +34,7 @@ export function MapTopBar() {
           </svg>
           {detailsTip.current ? <ToolTip label="Details" shortcut="D" animate={detailsTip.current.animate} align="right" /> : null}
         </button>
+        <SidebarToggle side="right" open={rightSidebarOpen} onToggle={() => setRightSidebarOpen(!rightSidebarOpen)} />
       </div>
     </div>
   );

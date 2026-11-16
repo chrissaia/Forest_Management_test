@@ -147,7 +147,7 @@ function ActionFeatures({
   });
 
   return (
-    <section aria-label="Action features" className="min-h-0 flex-1 overflow-y-auto ">
+    <section aria-label="Action features" className="min-h-0 flex-1 space-y-0.5 overflow-y-auto bg-surface-canvas">
       {rows.map((row) => (
         <FeatureListRow
           key={row.id}
@@ -155,8 +155,6 @@ function ActionFeatures({
           name={row.name}
           features={features}
           pressed={false}
-          linked
-          linking
           hovered={hoverFeature === row.id}
           onRemove={() => onUnlink(row.id)}
           removeLabel={`Unlink ${row.name}`}

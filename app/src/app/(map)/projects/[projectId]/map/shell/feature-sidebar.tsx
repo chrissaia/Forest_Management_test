@@ -2,11 +2,13 @@
 
 import { useMap } from "../map-context";
 import { FeatureDetails } from "./panels/feature-details";
+import { panelViews } from "./panels/panel-views";
 import { useSidebarWidth } from "./use-sidebar-width";
 
-// Stand details stay at the far right, beside the actions sidebar.
+// Feature details sit to the left of the anchored actions sidebar.
 export function FeatureSidebar() {
-  const { selectedFeature, featureDetailsOpen } = useMap();
+  const { selectedFeature, featureDetailsOpen, panel, selectedAction, linking, rightSidebarOpen } = useMap();
+  const actionsOpen = rightSidebarOpen && panelViews[panel].detailsOpen({ feature: selectedFeature, action: selectedAction, linking });
   const open = selectedFeature !== null && featureDetailsOpen;
   const { asideRef, width, minWidth, onPointerDown, onPointerMove, onPointerUp } =
     useSidebarWidth("feature-details-sidebar-width", "end", open, "--map-feature-width");
@@ -14,7 +16,7 @@ export function FeatureSidebar() {
   if (!open) return null;
 
   return (
-    <aside ref={asideRef} aria-label="Feature details" style={{ width }} className="absolute inset-y-0 right-0 z-10 border-l border-border-map bg-surface-canvas">
+    <aside ref={asideRef} aria-label="Feature details" style={{ width, right: actionsOpen ? "var(--map-right-width, 224px)" : 0 }} className="absolute inset-y-0 right-0 z-10 border-l border-border-map bg-surface-canvas [background-image:linear-gradient(var(--surface-translucent-placeholder-2),var(--surface-translucent-placeholder-2))]">
       <div className="h-full overflow-y-auto"><FeatureDetails /></div>
       <div role="separator" aria-label="Resize feature details" aria-orientation="vertical" aria-valuemin={minWidth} aria-valuenow={Math.round(width)} tabIndex={0}
         onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp}

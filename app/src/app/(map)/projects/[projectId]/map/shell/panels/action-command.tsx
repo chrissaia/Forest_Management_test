@@ -201,7 +201,7 @@ export function ActionCommand() {
           </>
         )}
       </header>
-      <div className="min-h-0 flex-1 overflow-y-auto py-2">
+      <div className="min-h-0 flex-1 space-y-0.5 overflow-y-auto py-2">
         {visibleFeatures.map((feature) => {
           const id = String(feature.id);
           const name = typeof feature.properties.name === "string" ? feature.properties.name : id;
