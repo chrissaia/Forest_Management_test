@@ -138,12 +138,6 @@ export function MapProvider({
     setRenameNewAction(id);
   };
 
-  const [detailsSelection, setDetailsSelection] = useState(selectedFeature);
-  if (detailsSelection !== selectedFeature) {
-    setDetailsSelection(selectedFeature);
-    if (selectedFeature !== null) setFeatureDetailsOpenState(true);
-  }
-
   const featureIds = features.map((feature) => String(feature.id));
   const selectedId = keptSelectedId(selectedFeature, featureIds);
   if (selectedId !== selectedFeature) setSelectedFeatureState(selectedId);
@@ -163,7 +157,6 @@ export function MapProvider({
 
   const setFeatureDetailsOpen = (open: boolean) => {
     setFeatureDetailsOpenState(open);
-    if (!open) setSelectedFeatureState(null);
   };
 
   // Hiding Actions also clears action selection and map highlights.
