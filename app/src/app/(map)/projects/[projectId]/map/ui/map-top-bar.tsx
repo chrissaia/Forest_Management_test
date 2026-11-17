@@ -9,13 +9,14 @@ import { useMap } from "../state/map-context";
 // Compact controls for the two independent map sidebars.
 // The project name sits in the center and opens links back to Home, Projects, and this project.
 export function MapTopBar({ title, projectId }: { title: string; projectId: number }) {
-  const { leftSidebarOpen, setLeftSidebarOpen, rightSidebarOpen, setRightSidebarOpen, featureDetailsOpen, setFeatureDetailsOpen } = useMap();
+  const { leftSidebarOpen, setLeftSidebarOpen, rightSidebarOpen, setRightSidebarOpen, featureDetailsOpen, setFeatureDetailsOpen, selectedFeature } = useMap();
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (!["a", "f", "d"].includes(event.key.toLowerCase()) || event.repeat || event.metaKey || event.ctrlKey || event.altKey || isTypingTarget(event.target)) return;
+      const key = typeof event.key === "string" ? event.key.toLowerCase() : "";
+      if (!["a", "f", "d"].includes(key) || event.repeat || event.metaKey || event.ctrlKey || event.altKey || isTypingTarget(event.target)) return;
       event.preventDefault();
-      if (event.key.toLowerCase() === "a") setRightSidebarOpen(!rightSidebarOpen);
-      else if (event.key.toLowerCase() === "f") setLeftSidebarOpen(!leftSidebarOpen);
+      if (key === "a") setRightSidebarOpen(!rightSidebarOpen);
+      else if (key === "f") setLeftSidebarOpen(!leftSidebarOpen);
       else setFeatureDetailsOpen(!featureDetailsOpen);
     };
     window.addEventListener("keydown", onKey);
@@ -27,6 +28,13 @@ export function MapTopBar({ title, projectId }: { title: string; projectId: numb
       <SidebarToggle side="left" open={leftSidebarOpen} onToggle={() => setLeftSidebarOpen(!leftSidebarOpen)} />
       <ProjectNav title={title} projectId={projectId} />
       <div className="flex items-center gap-2">
+        <div className="flex items-center rounded-[5px] border border-border-map p-0.5">
+          <span className="template-body-small rounded-[3px] bg-surface-neutral px-2 py-0.5 text-text-primary">Map</span>
+          <Link
+            href={`/projects/${projectId}/plan${selectedFeature ? `?stand=${encodeURIComponent(selectedFeature)}` : ""}`}
+            className="template-body-small rounded-[3px] px-2 py-0.5 text-text-secondary hover:text-text-primary"
+          >Plan</Link>
+        </div>
         <button type="button" aria-label="Toggle feature details" aria-keyshortcuts="D"
           onPointerEnter={() => detailsTip.show("details", true)} onPointerLeave={() => detailsTip.hide("details")}
           onFocus={() => detailsTip.show("details", false)} onBlur={() => detailsTip.hide("details")}
