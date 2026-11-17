@@ -525,7 +525,7 @@ export function SketchSession({
   }, [map]);
 
   useEffect(() => {
-    if (!map || !ready || !draw) return;
+    if (!map || !ready || !draw || !draw.enabled) return;
     applyTool(draw, map, tool);
     if (tool !== "pointer") {
       setSelectedFeature(null);
@@ -535,14 +535,14 @@ export function SketchSession({
   }, [draw, map, ready, tool, setSelectedFeature, setHoverFeature]);
 
   useEffect(() => {
-    if (!map || !ready || !draw) return;
+    if (!map || !ready || !draw || !draw.enabled) return;
     return installOutline(map, draw, hoverLineLayerId, () =>
       hoverLineCollection(snapshotFeature(draw, hoverRef.current)),
     );
   }, [map, ready, draw]);
 
   useEffect(() => {
-    if (!map || !ready || !draw || !map.style?._loaded) return;
+    if (!map || !ready || !draw || !draw.enabled || !map.style?._loaded) return;
     const source = lineSource(map, hoverLineLayerId);
     if (!source) return;
     source.setData(hoverLineCollection(snapshotFeature(draw, hoverFeature)));
@@ -550,14 +550,14 @@ export function SketchSession({
   }, [map, ready, draw, hoverFeature]);
 
   useEffect(() => {
-    if (!map || !ready || !draw) return;
+    if (!map || !ready || !draw || !draw.enabled) return;
     return installOutline(map, draw, selectedLineLayerId, () =>
       selectionLineData(snapshotFeature(draw, selectedRef.current)),
     );
   }, [map, ready, draw]);
 
   useEffect(() => {
-    if (!map || !ready || !draw || !map.style?._loaded) return;
+    if (!map || !ready || !draw || !draw.enabled || !map.style?._loaded) return;
     const source = lineSource(map, selectedLineLayerId);
     if (!source) return;
     source.setData(selectionLineData(snapshotFeature(draw, selectedFeature)));
@@ -565,7 +565,7 @@ export function SketchSession({
   }, [map, ready, draw, selectedFeature]);
 
   useEffect(() => {
-    if (!ready || !draw) return;
+    if (!ready || !draw || !draw.enabled) return;
     const paint = mapPaint();
     const activeColor = linking ? mapColor(getComputedStyle(document.documentElement), "--map-action-linked", "#eab308") : paint.polygon;
     draw.updateModeOptions<typeof TerraDrawSelectMode>("select", {
@@ -594,7 +594,7 @@ export function SketchSession({
 
   // A sidebar delete drops the id from the list. TerraDraw still has that polygon until this removes it.
   useEffect(() => {
-    if (!ready || !draw) return;
+    if (!ready || !draw || !draw.enabled) return;
     const current = features.map((feature) => String(feature.id));
     const currentIds = new Set(current);
     const removed = storedIdsRef.current.filter((id) => !currentIds.has(id) && draw.hasFeature(id));
@@ -603,7 +603,7 @@ export function SketchSession({
   }, [features, draw, ready]);
 
   useEffect(() => {
-    if (!ready || !draw || tool !== "pointer") return;
+    if (!ready || !draw || !draw.enabled || tool !== "pointer") return;
     const current = selectionId(draw);
     const action = selectionDraw(
       selectedFeature,
@@ -615,14 +615,14 @@ export function SketchSession({
   }, [draw, ready, selectedFeature, tool]);
 
   useEffect(() => {
-    if (!ready || !draw) return;
+    if (!ready || !draw || !draw.enabled) return;
     draw.updateModeOptions<typeof TerraDrawSelectMode>("select", {
       allowManualDeselection: !linking,
     });
   }, [draw, ready, linking]);
 
   useEffect(() => {
-    if (!map || !ready || !draw) return;
+    if (!map || !ready || !draw || !draw.enabled) return;
     return installActionLinks(map, draw, () =>
       actionLinkCollections(
         draw.getSnapshot(),
@@ -634,7 +634,7 @@ export function SketchSession({
   }, [map, ready, draw]);
 
   useEffect(() => {
-    if (!map || !ready || !draw || !map.style?._loaded) return;
+    if (!map || !ready || !draw || !draw.enabled || !map.style?._loaded) return;
     const data = actionLinkCollections(
       draw.getSnapshot(),
       highlightedFeatureIds,
@@ -666,7 +666,7 @@ function installOutline(
   const paint = mapPaint();
   // Copies the current line geometry and moves that layer to the top.
   const sync = () => {
-    if (!map.style?._loaded) return;
+    if (!draw.enabled || !map.style?._loaded) return;
     const source = lineSource(map, layerId);
     if (!source) return;
     source.setData(readData());
@@ -708,7 +708,7 @@ function installOutline(
 
 // The live TerraDraw feature for an id, or null when it is missing.
 function snapshotFeature(draw: TerraDrawInstance, id: string | null) {
-  if (id === null || !draw.hasFeature(id)) return null;
+  if (!draw.enabled || id === null || !draw.hasFeature(id)) return null;
   return draw.getSnapshotFeature(id) ?? null;
 }
 
@@ -753,6 +753,7 @@ function asSketch(feature: GeoJSONStoreFeatures | undefined): SketchFeature | nu
 
 // Switches TerraDraw mode and map gestures for the current tool.
 function applyTool(draw: TerraDrawInstance, map: MapLibreMap, tool: MapTool) {
+  if (!draw.enabled) return;
   const mode = drawModeName(tool);
   if (draw.getMode() !== mode) draw.setMode(mode);
   if (tool === "polygon") {
@@ -805,7 +806,7 @@ function installActionLinks(
   const paint = mapPaint();
   const linkedColor = mapColor(getComputedStyle(document.documentElement), "--map-action-linked", "#eab308");
   const sync = () => {
-    if (!map.style?._loaded) return;
+    if (!draw.enabled || !map.style?._loaded) return;
     const data = readData();
     const fill = lineSource(map, actionLinkFillLayerId);
     const line = lineSource(map, actionLinkLineLayerId);

@@ -1,16 +1,20 @@
 /*
  * Tests the soils GeoJSON source.
- * MapLibre is told to load /api/soils, and that request is sent as a POST with bounds.
+ * The source starts empty, then POST /api/soils fills it with the current bounds.
  */
 
-import type { Map as MapLibreMap, RequestParameters } from "maplibre-gl";
-import { describe, expect, it } from "vitest";
+import type { Map as MapLibreMap } from "maplibre-gl";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { installSoilSource, soilSourceId } from "./soil-source";
 
+const collection: GeoJSON.FeatureCollection = {
+  type: "FeatureCollection",
+  features: [],
+};
+
 function fakeMap(loaded: boolean) {
-  const sources = new Map<string, { type: string; data: string }>();
+  const sources = new Map<string, { type: string; data: GeoJSON.FeatureCollection | string }>();
   const listeners = new Map<string, Set<() => void>>();
-  let transform: ((url: string) => RequestParameters) | null = null;
   const map = {
     style: { _loaded: loaded },
     getBounds: () => ({
@@ -19,17 +23,20 @@ function fakeMap(loaded: boolean) {
       getEast: () => -81.3,
       getNorth: () => 41.613,
     }),
-    addSource(id: string, spec: { type: string; data: string }) {
-      sources.set(id, spec);
+    addSource(id: string, spec: { type: string; data: GeoJSON.FeatureCollection | string }) {
+      const source = {
+        ...spec,
+        setData(data: GeoJSON.FeatureCollection) {
+          source.data = data;
+        },
+      };
+      sources.set(id, source);
     },
     getSource(id: string) {
       return sources.get(id);
     },
     removeSource(id: string) {
       sources.delete(id);
-    },
-    setTransformRequest(next: ((url: string) => RequestParameters) | null) {
-      transform = next;
     },
     on(type: string, fn: () => void) {
       const set = listeners.get(type) ?? new Set<() => void>();
@@ -44,31 +51,56 @@ function fakeMap(loaded: boolean) {
       for (const fn of listeners.get("style.load") ?? []) fn();
     },
   };
-  return { map: map as unknown as MapLibreMap, sources, transform: () => transform };
+  return { map: map as unknown as MapLibreMap, sources };
+}
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
+function stubSoils(ok = true) {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () => ({
+      ok,
+      json: async () => collection,
+    })),
+  );
 }
 
 describe("soil source", () => {
-  it("adds /api/soils and posts the current bounds", () => {
-    const { map, sources, transform } = fakeMap(true);
+  it("posts the current bounds and sets the feature collection", async () => {
+    stubSoils();
+    const fetchMock = vi.mocked(fetch);
+    const { map, sources } = fakeMap(true);
+
     installSoilSource(map);
 
-    expect(sources.get(soilSourceId)).toEqual({ type: "geojson", data: "/api/soils" });
+    expect(sources.get(soilSourceId)?.data).toEqual({ type: "FeatureCollection", features: [] });
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
 
-    const request = transform()?.("http://localhost:3000/api/soils");
-    expect(request).toMatchObject({
-      url: "http://localhost:3000/api/soils",
-      method: "POST",
-    });
-    expect(JSON.parse(request?.body ?? "")).toEqual({
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe("/api/soils");
+    expect(init.method).toBe("POST");
+    expect(JSON.parse(String(init.body))).toEqual({
       bounds: { west: -81.302, south: 41.611, east: -81.3, north: 41.613 },
     });
-    expect(transform()?.("http://localhost:3000/api/basemap/style?v=2")).toEqual({
-      url: "http://localhost:3000/api/basemap/style?v=2",
-    });
+    expect(sources.get(soilSourceId)?.data).toEqual(collection);
+  });
+
+  it("keeps the empty collection when soils are unavailable", async () => {
+    stubSoils(false);
+    const { map, sources } = fakeMap(true);
+
+    installSoilSource(map);
+    await vi.waitFor(() => expect(fetch).toHaveBeenCalledOnce());
+
+    expect(sources.get(soilSourceId)?.data).toEqual({ type: "FeatureCollection", features: [] });
   });
 
   it("waits for the style, then removes the source on cleanup", () => {
-    const { map, sources, transform } = fakeMap(false);
+    stubSoils();
+    const { map, sources } = fakeMap(false);
     const stop = installSoilSource(map);
     expect(sources.has(soilSourceId)).toBe(false);
 
@@ -77,6 +109,5 @@ describe("soil source", () => {
 
     stop();
     expect(sources.has(soilSourceId)).toBe(false);
-    expect(transform()).toBeNull();
   });
 });

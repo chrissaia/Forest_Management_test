@@ -28,6 +28,9 @@ export function MapStage({
 }) {
   const [map, setMap] = useState<MapLibreMap | null>(null);
   const beforeRemove = useRef<(() => void) | null>(null);
+  // The map opens on this camera. A later save must not rebuild it, or TerraDraw
+  // stops while sketch effects still call it.
+  const openedCamera = useRef({ mapX, mapY, mapZoom });
 
   useEffect(() => {
     if (!map) return;
@@ -64,9 +67,9 @@ export function MapStage({
     <>
       <Map
         interactive
-        mapX={mapX}
-        mapY={mapY}
-        mapZoom={mapZoom}
+        mapX={openedCamera.current.mapX}
+        mapY={openedCamera.current.mapY}
+        mapZoom={openedCamera.current.mapZoom}
         onReady={setMap}
         beforeRemove={beforeRemove}
       />

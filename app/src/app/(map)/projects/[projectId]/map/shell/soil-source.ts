@@ -1,20 +1,25 @@
-import type { Map as MapLibreMap, RequestParameters } from "maplibre-gl";
+import type { GeoJSONSource, Map as MapLibreMap } from "maplibre-gl";
 
 export const soilSourceId = "ssurgo";
 const soilSourceUrl = "/api/soils";
 
+const emptySoils: GeoJSON.FeatureCollection = {
+  type: "FeatureCollection",
+  features: [],
+};
+
 // Registers the Soil Data Access GeoJSON source.
-// MapLibre loads a source URL with GET, so this rewrites that request into a POST
-// whose body is the current map bounds. No layer uses the source, so nothing is drawn.
+// The collection starts empty and is filled from POST /api/soils with the current bounds.
+// A failed response stays empty. A source URL would make MapLibre throw AJAXError.
 // A restored style drops custom sources, so style.load adds this one again.
 export function installSoilSource(map: MapLibreMap) {
   let stopped = false;
 
   const mount = () => {
     if (stopped || !map.style?._loaded) return;
-    map.setTransformRequest((url) => soilRequest(url, map));
     if (map.getSource(soilSourceId)) return;
-    map.addSource(soilSourceId, { type: "geojson", data: soilSourceUrl });
+    map.addSource(soilSourceId, { type: "geojson", data: emptySoils });
+    void loadSoilFeatures(map, () => stopped);
   };
 
   map.on("style.load", mount);
@@ -24,32 +29,40 @@ export function installSoilSource(map: MapLibreMap) {
     stopped = true;
     map.off("style.load", mount);
     if (!map.style?._loaded) return;
-    map.setTransformRequest(null);
     if (map.getSource(soilSourceId)) map.removeSource(soilSourceId);
   };
 }
 
-function soilRequest(url: string, map: MapLibreMap): RequestParameters {
-  let pathname = "";
-  try {
-    pathname = new URL(url, "http://localhost").pathname;
-  } catch {
-    return { url };
-  }
-  if (pathname !== soilSourceUrl) return { url };
-
+async function loadSoilFeatures(map: MapLibreMap, stopped: () => boolean) {
   const bounds = map.getBounds();
-  return {
-    url,
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({
-      bounds: {
-        west: bounds.getWest(),
-        south: bounds.getSouth(),
-        east: bounds.getEast(),
-        north: bounds.getNorth(),
-      },
-    }),
-  };
+  let response: Response;
+  try {
+    response = await fetch(soilSourceUrl, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        bounds: {
+          west: bounds.getWest(),
+          south: bounds.getSouth(),
+          east: bounds.getEast(),
+          north: bounds.getNorth(),
+        },
+      }),
+    });
+  } catch {
+    return;
+  }
+  if (stopped() || !response.ok) return;
+
+  let collection: GeoJSON.FeatureCollection;
+  try {
+    collection = (await response.json()) as GeoJSON.FeatureCollection;
+  } catch {
+    return;
+  }
+  if (stopped() || collection.type !== "FeatureCollection") return;
+
+  const source = map.getSource(soilSourceId);
+  if (source?.type !== "geojson") return;
+  (source as GeoJSONSource).setData(collection);
 }
