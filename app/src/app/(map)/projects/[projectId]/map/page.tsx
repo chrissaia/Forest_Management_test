@@ -12,16 +12,15 @@ import { getMap } from "@/lib/maps/maps";
 import type { MapFeature } from "@/lib/maps/map-features";
 import { getProject } from "@/lib/projects/projects";
 import { createClient } from "@/lib/supabase/server";
-import { MapProvider } from "./map-context";
-import { MapTopBar } from "./shell/map-top-bar";
-import { MapStage } from "./shell/map-stage";
-import { PanelBar } from "./shell/panel-bar";
-import { CommandSidebar } from "./shell/command-sidebar";
-import { MapContextMenu } from "./shell/map-context-menu";
-import { FeatureSidebar } from "./shell/feature-sidebar";
-import { DetailsSidebar } from "./shell/details-sidebar";
-import { MapToolbar } from "./shell/map-toolbar";
-import { MapToolKeys } from "./shell/map-tool-keys";
+import { MapProvider } from "./state/map-context";
+import { MapTopBar } from "./ui/map-top-bar";
+import { MapStage } from "./ui/map-stage";
+import { CommandSidebar } from "./ui/command-sidebar";
+import { MapContextMenu } from "./ui/map-context-menu";
+import { FeatureSidebar } from "./ui/feature-sidebar";
+import { DetailsSidebar } from "./ui/details-sidebar";
+import { MapToolbar } from "./ui/map-toolbar";
+import { MapToolKeys } from "./state/map-tool-keys";
 
 // The map route, with a fallback while the project map loads.
 export default function ProjectMapPage({
@@ -80,7 +79,7 @@ async function ProjectMap({
       initialActionFeatures={actionFeatures}
     >
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-      <MapTopBar />
+      <MapTopBar title={project.title ?? "Untitled"} projectId={id} />
       <main className="relative min-h-0 min-w-0 flex-1 overflow-hidden">
         <MapStage
           projectId={id}
@@ -88,7 +87,6 @@ async function ProjectMap({
           mapY={map.cameraY}
           mapZoom={map.mapZoom}
         />
-        <PanelBar />
         <CommandSidebar />
         <DetailsSidebar />
         <FeatureSidebar />

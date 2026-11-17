@@ -23,7 +23,7 @@ export function FeatureDetails() {
   const acres = polygonAcres(feature);
 
   return (
-    <div className="flex w-full shrink-0 flex-col border-b border-surface-translucent-placeholder p-2">
+    <div className="flex w-full shrink-0 flex-col border-b border-surface-translucent-placeholder px-2 pt-4 pb-2">
       <div className="flex w-full items-center gap-1">
         <div className="min-w-0 flex-1">
           <FeatureName
