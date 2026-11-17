@@ -89,7 +89,7 @@ export function ActionList({ featureId }: { featureId?: string } = {}) {
         )}
       </div>
       {createError ? <p role="alert" className="template-body-small px-4 py-2 text-text-primary">{createError}</p> : null}
-      {selectedAction !== null ? <div className="min-h-0 flex-1"><ActionDetails /></div> : <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto bg-transparent py-2">
+      {selectedAction !== null ? <div className="min-h-0 flex-1"><ActionDetails /></div> : <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto bg-transparent px-2 py-2">
         {visibleActions.map((action) => {
           const hovered = hoverAction === action.id;
           return (
@@ -107,32 +107,19 @@ export function ActionList({ featureId }: { featureId?: string } = {}) {
                 event.preventDefault();
                 setSelectedAction(action.id);
               }}
-              className={`group relative flex w-full cursor-pointer flex-col items-start px-4 py-1 pr-10 text-left transition-colors duration-200 ease-in-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary hover:bg-surface-translucent-placeholder-2 ${hovered ? "bg-surface-translucent-placeholder-2" : ""}`}
+              className={`group relative flex w-full cursor-pointer flex-col items-start rounded-[6px] px-2 py-1.5 text-left transition-colors duration-200 ease-in-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary hover:bg-surface-translucent-placeholder-2 ${hovered ? "bg-surface-translucent-placeholder-2" : ""}`}
             >
-              <p className="template-body-medium line-clamp-2 w-full text-text-primary">
-                {action.name}
-              </p>
-              <p
-                suppressHydrationWarning
-                className="template-body-small flex items-center gap-1 text-text-secondary"
-              >
-                <svg
-                  aria-hidden="true"
-                  viewBox="0 0 24 24"
-                  className="size-3 shrink-0"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" />
-                  <path d="m15 5 4 4" />
-                </svg>
-                <span className="sr-only">edited </span>
-                {editedLabel(new Date(action.editedAt), new Date())}
-              </p>
-              <ActionRowMenu id={action.id} name={action.name} />
+              <div className="relative flex w-full items-center gap-2">
+                <p className="template-body-medium-emphasized min-w-0 flex-1 truncate text-text-primary">
+                  {action.name}
+                </p>
+                <p suppressHydrationWarning className={`template-body-small shrink-0 text-text-secondary group-hover:invisible group-focus-within:invisible ${hovered ? "invisible" : ""}`}>
+                  <span className="sr-only">edited </span>
+                  {editedLabel(new Date(action.editedAt), new Date())}
+                </p>
+                <ActionRowMenu id={action.id} name={action.name} open={hovered} />
+              </div>
+              {action.description.trim() ? <p className="template-body-small line-clamp-2 w-full text-text-secondary">{action.description}</p> : null}
             </div>
           );
         })}
@@ -141,9 +128,9 @@ export function ActionList({ featureId }: { featureId?: string } = {}) {
   );
 }
 
-function ActionRowMenu({ id, name }: { id: number; name: string }) {
+function ActionRowMenu({ id, name, open }: { id: number; name: string; open: boolean }) {
   const { setContextMenu } = useMap();
-  return <div className="absolute right-2 top-1/2 -translate-y-1/2 z-10 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100" onClick={(event) => event.stopPropagation()}>
+  return <div className={`absolute right-0 top-1/2 z-10 -translate-y-1/2 group-hover:opacity-100 group-focus-within:opacity-100 ${open ? "opacity-100" : "opacity-0"}`} onClick={(event) => event.stopPropagation()}>
     <button type="button" aria-label={`More options for ${name}`} aria-haspopup="menu" onClick={(event) => {
       const bounds = event.currentTarget.getBoundingClientRect();
       setContextMenu({ kind: "action", id, x: bounds.right - 128, y: bounds.bottom + 4 });

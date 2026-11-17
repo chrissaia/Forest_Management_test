@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useId, useRef, useState } from "react";
+import Link from "next/link";
 import { isTypingTarget } from "../sketch/events/keyboard";
 import { ToolTip, useToolTip } from "./map-toolbar";
 import { useMap } from "../state/map-context";
 
 // Compact controls for the two independent map sidebars.
-// The project name sits in the center. It is a button with no action yet.
-export function MapTopBar({ title }: { title: string }) {
+// The project name sits in the center and opens links back to Home, Projects, and this project.
+export function MapTopBar({ title, projectId }: { title: string; projectId: number }) {
   const { leftSidebarOpen, setLeftSidebarOpen, rightSidebarOpen, setRightSidebarOpen, featureDetailsOpen, setFeatureDetailsOpen } = useMap();
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -24,12 +25,7 @@ export function MapTopBar({ title }: { title: string }) {
   return (
     <div role="toolbar" aria-label="Map sidebars" className="relative z-[60] flex h-8 shrink-0 items-center justify-between border-b border-border-map bg-surface-canvas px-2">
       <SidebarToggle side="left" open={leftSidebarOpen} onToggle={() => setLeftSidebarOpen(!leftSidebarOpen)} />
-      <button
-        type="button"
-        className="template-body-small absolute top-1/2 left-1/2 z-10 h-6 max-w-[calc(100%-7rem)] -translate-x-1/2 -translate-y-1/2 cursor-pointer truncate rounded-[4px] px-2 leading-[22px] text-text-primary transition-colors duration-200 ease-in-out hover:bg-surface-translucent-placeholder-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary"
-      >
-        {title}
-      </button>
+      <ProjectNav title={title} projectId={projectId} />
       <div className="flex items-center gap-2">
         <button type="button" aria-label="Toggle feature details" aria-keyshortcuts="D"
           onPointerEnter={() => detailsTip.show("details", true)} onPointerLeave={() => detailsTip.hide("details")}
@@ -43,6 +39,52 @@ export function MapTopBar({ title }: { title: string }) {
         </button>
         <SidebarToggle side="right" open={rightSidebarOpen} onToggle={() => setRightSidebarOpen(!rightSidebarOpen)} />
       </div>
+    </div>
+  );
+}
+
+const navItemClass = "template-body-small-emphasized block truncate rounded-[4px] px-2 py-1 text-text-primary hover:bg-surface-translucent-placeholder-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary";
+
+function ProjectNav({ title, projectId }: { title: string; projectId: number }) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const menuId = useId();
+
+  useEffect(() => {
+    if (!open) return;
+    const onPointerDown = (event: PointerEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
+
+  return (
+    <div ref={rootRef} className="absolute top-1/2 left-1/2 z-10 max-w-[calc(100%-7rem)] -translate-x-1/2 -translate-y-1/2">
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls={menuId}
+        aria-haspopup="menu"
+        onClick={() => setOpen((value) => !value)}
+        className={`template-body-small block h-6 max-w-full cursor-pointer truncate rounded-[4px] px-2 leading-[22px] text-text-secondary transition-colors duration-200 ease-in-out hover:bg-surface-translucent-placeholder-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary ${open ? "bg-surface-translucent-placeholder-2" : ""}`}
+      >
+        {title}
+      </button>
+      {open ? (
+        <div id={menuId} role="menu" aria-label="Project" className="absolute top-[calc(100%+4px)] left-1/2 flex w-max min-w-[256px] -translate-x-1/2 flex-col gap-[2px] rounded-[8px] border border-border-map bg-surface-canvas p-1 shadow-[0_2px_6px_rgb(0_0_0/0.35)]">
+          <Link role="menuitem" href="/" className={navItemClass}>Home</Link>
+          <Link role="menuitem" href="/projects" className={navItemClass}>Projects</Link>
+          <Link role="menuitem" href={`/projects/${projectId}`} className={navItemClass}>{title}</Link>
+        </div>
+      ) : null}
     </div>
   );
 }

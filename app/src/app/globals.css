@@ -150,6 +150,14 @@ html.sidebar-resizing * {
   letter-spacing: 0.4px;
 }
 
+.template-body-small-emphasized {
+  font-family: var(--font-roboto), sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  letter-spacing: 0.4px;
+}
+
 .template-label-small {
   font-family: var(--font-roboto), sans-serif;
   font-size: 11px;
