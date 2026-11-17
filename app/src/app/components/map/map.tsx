@@ -64,5 +64,5 @@ export function Map({
     };
   }, [interactive, mapX, mapY, mapZoom]);
 
-  return <div ref={containerRef} className="h-full w-full" />;
+  return <div ref={containerRef} className="h-full w-full [&_canvas]:outline-none" />;
 }

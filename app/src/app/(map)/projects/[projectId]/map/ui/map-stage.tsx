@@ -10,6 +10,7 @@ import type { Map as MapLibreMap } from "maplibre-gl";
 import { Map } from "@/app/components/map/map";
 import { updateMapCamera } from "@/lib/maps/map-actions";
 import { SketchSession } from "../sketch/sketch-session";
+import { installSoilSource } from "../data/soil-source";
 
 const cameraDelayMs = 500;
 
@@ -27,6 +28,14 @@ export function MapStage({
 }) {
   const [map, setMap] = useState<MapLibreMap | null>(null);
   const beforeRemove = useRef<(() => void) | null>(null);
+  // The map opens on this camera. A later save must not rebuild it, or TerraDraw
+  // stops while sketch effects still call it.
+  const openedCamera = useRef({ mapX, mapY, mapZoom });
+
+  useEffect(() => {
+    if (!map) return;
+    return installSoilSource(map);
+  }, [map]);
 
   useEffect(() => {
     if (!map) return;
@@ -58,9 +67,9 @@ export function MapStage({
     <>
       <Map
         interactive
-        mapX={mapX}
-        mapY={mapY}
-        mapZoom={mapZoom}
+        mapX={openedCamera.current.mapX}
+        mapY={openedCamera.current.mapY}
+        mapZoom={openedCamera.current.mapZoom}
         onReady={setMap}
         beforeRemove={beforeRemove}
       />

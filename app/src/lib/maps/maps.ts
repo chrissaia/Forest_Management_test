@@ -29,10 +29,10 @@ type MapRow = {
   camera_x: number;
   camera_y: number;
   map_zoom: number;
-  map_features: { id: string; name: string; geometry: MapPolygon }[] | null;
+  map_features: { id: string; name: string; description: string; geometry: MapPolygon }[] | null;
 };
 
-const mapColumns = "camera_x, camera_y, map_zoom, map_features(id, name, geometry)";
+const mapColumns = "camera_x, camera_y, map_zoom, map_features(id, name, description, geometry)";
 
 // The project map and its features, or null when the map row is missing.
 export async function getMap(
@@ -103,6 +103,7 @@ export async function insertMapFeature(
     id: parsed.id,
     map_id: projectId,
     name: parsed.name,
+    description: parsed.description,
     geometry: parsed.geometry,
     edited_at: new Date().toISOString(),
   });
@@ -150,6 +151,32 @@ export async function renameMapFeature(
     .from("map_features")
     .update({
       name: nextName,
+      edited_at: new Date().toISOString(),
+    })
+    .eq("id", featureId)
+    .eq("map_id", projectId);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
+// Updates the description of one feature row. Geometry and name stay as they are.
+export async function describeMapFeature(
+  projectId: number,
+  id: unknown,
+  description: string,
+  supabase: SupabaseClient,
+): Promise<void> {
+  const featureId = parseFeatureId(id);
+  if (typeof description !== "string") {
+    throw new Error("Feature description must be a string.");
+  }
+
+  const { error } = await supabase
+    .from("map_features")
+    .update({
+      description: description.trim(),
       edited_at: new Date().toISOString(),
     })
     .eq("id", featureId)

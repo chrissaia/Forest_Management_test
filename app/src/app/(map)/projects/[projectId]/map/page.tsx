@@ -6,24 +6,28 @@
 import { connection } from "next/server";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import { getProjectActions } from "@/lib/actions/actions";
+import { getActionFeatures } from "@/lib/actions/action-features";
 import { getMap } from "@/lib/maps/maps";
 import type { MapFeature } from "@/lib/maps/map-features";
 import { getProject } from "@/lib/projects/projects";
 import { createClient } from "@/lib/supabase/server";
-import { MapProvider } from "./map-context";
-import { MapStage } from "./shell/map-stage";
-import { PanelBar } from "./shell/panel-bar";
-import { CommandSidebar } from "./shell/command-sidebar";
-import { DetailsSidebar } from "./shell/details-sidebar";
-import { MapToolbar } from "./shell/map-toolbar";
-import { MapToolKeys } from "./shell/map-tool-keys";
+import { MapProvider } from "./state/map-context";
+import { MapTopBar } from "./ui/map-top-bar";
+import { MapStage } from "./ui/map-stage";
+import { CommandSidebar } from "./ui/command-sidebar";
+import { MapContextMenu } from "./ui/map-context-menu";
+import { FeatureSidebar } from "./ui/feature-sidebar";
+import { DetailsSidebar } from "./ui/details-sidebar";
+import { MapToolbar } from "./ui/map-toolbar";
+import { MapToolKeys } from "./state/map-tool-keys";
 
 // The map route, with a fallback while the project map loads.
 export default function ProjectMapPage({
   params,
 }: PageProps<"/projects/[projectId]/map">) {
   return (
-    <Suspense fallback={<main className="min-h-0 flex-1" />}>
+    <Suspense fallback={<main className="min-h-0 min-w-0 flex-1 overflow-hidden" />}>
       <ProjectMap params={params} />
     </Suspense>
   );
@@ -35,7 +39,7 @@ function sketchFeatures(features: MapFeature[]) {
     type: "Feature" as const,
     id: feature.id,
     geometry: feature.geometry,
-    properties: { mode: "polygon", name: feature.name },
+    properties: { mode: "polygon", name: feature.name, description: feature.description },
   }));
 }
 
@@ -61,22 +65,36 @@ async function ProjectMap({
   if (!map) {
     notFound();
   }
+  const [actions, actionFeatures] = await Promise.all([
+    getProjectActions(id, supabase),
+    getActionFeatures(id, supabase),
+  ]);
 
   return (
-    <MapProvider key={projectId} projectId={id} initialFeatures={sketchFeatures(map.features)}>
-      <main className="relative min-h-0 flex-1">
+    <MapProvider
+      key={projectId}
+      projectId={id}
+      initialFeatures={sketchFeatures(map.features)}
+      initialActions={actions}
+      initialActionFeatures={actionFeatures}
+    >
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+      <MapTopBar title={project.title ?? "Untitled"} projectId={id} />
+      <main className="relative min-h-0 min-w-0 flex-1 overflow-hidden">
         <MapStage
           projectId={id}
           mapX={map.cameraX}
           mapY={map.cameraY}
           mapZoom={map.mapZoom}
         />
-        <PanelBar />
         <CommandSidebar />
         <DetailsSidebar />
+        <FeatureSidebar />
         <MapToolbar />
         <MapToolKeys />
+        <MapContextMenu />
       </main>
+      </div>
     </MapProvider>
   );
 }

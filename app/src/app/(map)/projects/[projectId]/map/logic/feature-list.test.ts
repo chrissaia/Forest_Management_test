@@ -95,6 +95,29 @@ describe("feature list", () => {
     expect(savedFeature(named(feature(id), "Polygon 1"))?.name).toBe("Polygon 1");
   });
 
+  it("keeps the description when the geometry changes", () => {
+    const current = {
+      ...named(feature(id), "Polygon 1"),
+      properties: { mode: "polygon", name: "Polygon 1", description: "North slope" },
+    };
+    const updated = listAfter([current], { type: "update", feature: feature(id, 2) });
+    expect(updated?.[0].properties.description).toBe("North slope");
+    expect(updated?.[0].properties.name).toBe("Polygon 1");
+  });
+
+  it("describes one feature and skips an unchanged description", () => {
+    const current = named(feature(id), "Polygon 1");
+    const described = listAfter([current], {
+      type: "describe",
+      id,
+      description: "North slope",
+    });
+    expect(described?.[0].properties.description).toBe("North slope");
+    expect(described?.[0].properties.name).toBe("Polygon 1");
+    expect(listAfter(described ?? [], { type: "describe", id, description: "North slope" })).toBeNull();
+    expect(savedFeature(described?.[0] ?? current)?.description).toBe("North slope");
+  });
+
   it("renames one feature and leaves the geometry alone", () => {
     const current = named(feature(id), "Polygon 1");
     const renamed = listAfter([current], { type: "rename", id, name: "North stand" });

@@ -10,6 +10,7 @@ export type FeatureChange =
   | { type: "insert"; feature: GeoJSONStoreFeatures }
   | { type: "update"; feature: GeoJSONStoreFeatures }
   | { type: "rename"; id: string; name: string }
+  | { type: "describe"; id: string; description: string }
   | { type: "delete"; id: string };
 
 // The label used in a feature name. Each geometry type keeps its own number series.
@@ -56,10 +57,15 @@ export function listAfter(
       return null;
     }
     const next = features.slice();
-    const previousName = features[index].properties.name;
-    next[index] = typeof previousName === "string"
-      ? withName(change.feature, previousName)
-      : change.feature;
+    const previous = features[index];
+    let nextFeature = change.feature;
+    if (typeof previous.properties.name === "string") {
+      nextFeature = withName(nextFeature, previous.properties.name);
+    }
+    if (typeof previous.properties.description === "string") {
+      nextFeature = withDescription(nextFeature, previous.properties.description);
+    }
+    next[index] = nextFeature;
     return next;
   }
   if (change.type === "rename") {
@@ -70,6 +76,16 @@ export function listAfter(
     next[index] = withName(features[index], change.name);
     return next;
   }
+  if (change.type === "describe") {
+    const index = features.findIndex((feature) => String(feature.id) === change.id);
+    if (index < 0) return null;
+    const current = features[index].properties.description;
+    const previous = typeof current === "string" ? current : "";
+    if (previous === change.description) return null;
+    const next = features.slice();
+    next[index] = withDescription(features[index], change.description);
+    return next;
+  }
   if (!features.some((feature) => String(feature.id) === change.id)) return null;
   return features.filter((feature) => String(feature.id) !== change.id);
 }
@@ -78,7 +94,12 @@ export function listAfter(
 export function savedFeature(feature: GeoJSONStoreFeatures): MapFeature | null {
   try {
     const [parsed] = parseMapFeatures([
-      { id: feature.id, name: feature.properties.name, geometry: feature.geometry },
+      {
+        id: feature.id,
+        name: feature.properties.name,
+        description: feature.properties.description,
+        geometry: feature.geometry,
+      },
     ]);
     return parsed ?? null;
   } catch {
@@ -91,6 +112,14 @@ function withName(feature: GeoJSONStoreFeatures, name: string): GeoJSONStoreFeat
   return {
     ...feature,
     properties: { ...feature.properties, name },
+  };
+}
+
+// A copy of the feature whose description is set.
+function withDescription(feature: GeoJSONStoreFeatures, description: string): GeoJSONStoreFeatures {
+  return {
+    ...feature,
+    properties: { ...feature.properties, description },
   };
 }
 

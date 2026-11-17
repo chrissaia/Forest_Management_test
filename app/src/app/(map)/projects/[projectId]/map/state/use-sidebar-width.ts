@@ -1,21 +1,22 @@
 "use client";
 
 /*
- * Blank details panel on the right of the map.
- * It is visible only while a feature is selected.
+ * Stored width and drag resize for a map sidebar.
+ * start measures from the left edge. end measures from the right edge.
  */
 
 import { useEffect, useRef, useState } from "react";
-import { useMap } from "../map-context";
-import { FeatureName } from "./feature-name";
 
-const storageKey = "details-sidebar-width";
 const defaultWidth = 224;
 const minWidth = 200;
 
-// The resizable details sidebar. Hidden when nothing is selected.
-export function DetailsSidebar() {
-  const { features, selectedFeature } = useMap();
+// Width, bounds, and pointer handlers for one sidebar.
+export function useSidebarWidth(
+  storageKey: string,
+  edge: "start" | "end",
+  open = true,
+  occupiedWidthProperty?: string,
+) {
   const asideRef = useRef<HTMLElement>(null);
   const dragging = useRef(false);
   const [width, setWidth] = useState(defaultWidth);
@@ -28,15 +29,15 @@ export function DetailsSidebar() {
       setWidth(clampWidth(stored, asideRef.current?.parentElement));
     }
     setReady(true);
-  }, []);
+  }, [storageKey]);
 
   useEffect(() => {
     if (!ready) return;
     localStorage.setItem(storageKey, String(width));
-  }, [ready, width]);
+  }, [ready, storageKey, width]);
 
   useEffect(() => {
-    if (selectedFeature !== null) {
+    if (open) {
       setWidth((current) =>
         clampWidth(current, asideRef.current?.parentElement),
       );
@@ -44,7 +45,7 @@ export function DetailsSidebar() {
     }
     dragging.current = false;
     document.documentElement.classList.remove("sidebar-resizing");
-  }, [selectedFeature]);
+  }, [open]);
 
   useEffect(() => {
     // Keeps the sidebar inside the map after the window changes size.
@@ -61,6 +62,15 @@ export function DetailsSidebar() {
     };
   }, []);
 
+  // Exposes the occupied width to the bottom panel between the sidebars.
+  useEffect(() => {
+    const parent = asideRef.current?.parentElement;
+    if (!parent) return;
+    const property = occupiedWidthProperty ?? (edge === "start" ? "--map-left-width" : "--map-right-width");
+    parent.style.setProperty(property, open ? `${width}px` : "0px");
+    return () => { parent.style.setProperty(property, "0px"); };
+  }, [edge, width, open, occupiedWidthProperty]);
+
   // Starts a sidebar resize drag.
   function onPointerDown(event: React.PointerEvent<HTMLDivElement>) {
     event.preventDefault();
@@ -75,7 +85,11 @@ export function DetailsSidebar() {
     const aside = asideRef.current;
     const parent = aside?.parentElement;
     if (!aside || !parent) return;
-    const next = aside.getBoundingClientRect().right - event.clientX;
+    const bounds = aside.getBoundingClientRect();
+    const next =
+      edge === "start"
+        ? event.clientX - bounds.left
+        : bounds.right - event.clientX;
     setWidth(clampWidth(next, parent));
   }
 
@@ -88,44 +102,14 @@ export function DetailsSidebar() {
     }
   }
 
-  if (selectedFeature === null) return null;
-
-  const feature = features.find((item) => String(item.id) === selectedFeature);
-  const featureName = typeof feature?.properties.name === "string" ? feature.properties.name : "";
-
-  return (
-    <aside
-      ref={asideRef}
-      aria-label="Details"
-      style={{ width }}
-      className="absolute inset-y-0 right-0 z-10"
-    >
-      <div className="flex h-full flex-col overflow-hidden border-l border-border-map bg-surface-canvas">
-        <div className="flex w-full shrink-0 border-b border-surface-translucent-placeholder p-2">
-          <FeatureName
-            key={selectedFeature}
-            id={selectedFeature}
-            name={featureName}
-            features={features}
-            activate="click"
-          />
-        </div>
-      </div>
-      <div
-        role="separator"
-        aria-orientation="vertical"
-        aria-label="Resize details sidebar"
-        aria-valuemin={minWidth}
-        aria-valuenow={Math.round(width)}
-        tabIndex={0}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerCancel={onPointerUp}
-        className="absolute inset-y-0 -left-1 z-20 w-2 cursor-col-resize touch-none"
-      />
-    </aside>
-  );
+  return {
+    asideRef,
+    width,
+    minWidth,
+    onPointerDown,
+    onPointerMove,
+    onPointerUp,
+  };
 }
 
 // Keeps the sidebar between its minimum and 45% of the map width.
