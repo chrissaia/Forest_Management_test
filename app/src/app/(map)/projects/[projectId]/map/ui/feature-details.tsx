@@ -7,9 +7,9 @@
 
 import { ParagraphField } from "@/app/components/texts/paragraph-field";
 import type { TextFieldChange } from "@/app/components/texts/text-field-change";
-import { useMap } from "../../map-context";
-import { FeatureName } from "../feature-name";
-import { polygonAcres } from "../polygon-acres";
+import { useMap } from "../state/map-context";
+import { FeatureName } from "./feature-name";
+import { polygonAcres } from "../logic/polygon-acres";
 
 // Name and acreage for the selected polygon.
 export function FeatureDetails() {

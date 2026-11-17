@@ -3,10 +3,11 @@
 import { useEffect } from "react";
 import { isTypingTarget } from "../sketch/events/keyboard";
 import { ToolTip, useToolTip } from "./map-toolbar";
-import { useMap } from "../map-context";
+import { useMap } from "../state/map-context";
 
 // Compact controls for the two independent map sidebars.
-export function MapTopBar() {
+// The project name sits in the center. It is a button with no action yet.
+export function MapTopBar({ title }: { title: string }) {
   const { leftSidebarOpen, setLeftSidebarOpen, rightSidebarOpen, setRightSidebarOpen, featureDetailsOpen, setFeatureDetailsOpen } = useMap();
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -23,6 +24,12 @@ export function MapTopBar() {
   return (
     <div role="toolbar" aria-label="Map sidebars" className="relative z-[60] flex h-8 shrink-0 items-center justify-between border-b border-border-map bg-surface-canvas px-2">
       <SidebarToggle side="left" open={leftSidebarOpen} onToggle={() => setLeftSidebarOpen(!leftSidebarOpen)} />
+      <button
+        type="button"
+        className="template-body-small absolute top-1/2 left-1/2 z-10 h-6 max-w-[calc(100%-7rem)] -translate-x-1/2 -translate-y-1/2 cursor-pointer truncate rounded-[4px] px-2 leading-[22px] text-text-primary transition-colors duration-200 ease-in-out hover:bg-surface-translucent-placeholder-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary"
+      >
+        {title}
+      </button>
       <div className="flex items-center gap-2">
         <button type="button" aria-label="Toggle feature details" aria-keyshortcuts="D"
           onPointerEnter={() => detailsTip.show("details", true)} onPointerLeave={() => detailsTip.hide("details")}

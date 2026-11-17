@@ -1,19 +1,16 @@
 "use client";
 
 /*
- * The resizable details sidebar on the right of the map.
- * Each panel decides when its details are open.
+ * The resizable actions sidebar on the right of the map.
  */
 
-import { useMap } from "../map-context";
-import { panelViews } from "./panels/panel-views";
-import { useSidebarWidth } from "./use-sidebar-width";
+import { useMap } from "../state/map-context";
+import { ActionList } from "./action-command";
+import { useSidebarWidth } from "../state/use-sidebar-width";
 
-// The right sidebar for the open panel.
+// The right sidebar.
 export function DetailsSidebar() {
-  const { panel, linking, selectedFeature, selectedAction, rightSidebarOpen } = useMap();
-  const view = panelViews[panel];
-  const open = rightSidebarOpen && view.detailsOpen({ feature: selectedFeature, action: selectedAction, linking });
+  const { rightSidebarOpen } = useMap();
   const {
     asideRef,
     width,
@@ -21,11 +18,9 @@ export function DetailsSidebar() {
     onPointerDown,
     onPointerMove,
     onPointerUp,
-  } = useSidebarWidth("details-sidebar-width", "end", open);
+  } = useSidebarWidth("details-sidebar-width", "end", rightSidebarOpen);
 
-  if (!open) return null;
-
-  const Details = view.Details;
+  if (!rightSidebarOpen) return null;
 
   return (
     <aside
@@ -36,7 +31,7 @@ export function DetailsSidebar() {
     >
       <div className="flex h-full flex-col border-l border-border-map bg-surface-canvas">
         <div className="flex min-h-0 flex-1 flex-col">
-          <Details />
+          <ActionList />
         </div>
       </div>
       <div

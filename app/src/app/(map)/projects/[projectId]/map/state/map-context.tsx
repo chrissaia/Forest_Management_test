@@ -9,20 +9,12 @@ import { createContext, useContext, useState } from "react";
 import type { GeoJSONStoreFeatures } from "terra-draw";
 import type { ProjectAction } from "@/lib/actions/actions";
 import { highlightedFeatureIds, linkedFeatureIds, type ActionFeatureLink } from "@/lib/actions/action-feature-links";
-import { keptHoverId, keptSelectedId, selectedForTool } from "./sketch/kinds/polygon/hit";
-import { useActionFeatures } from "./use-action-features";
-import { useMapActions } from "./use-map-actions";
-import { useMapFeatures } from "./use-map-features";
+import { keptHoverId, keptSelectedId, selectedForTool } from "../sketch/kinds/polygon/hit";
+import { useActionFeatures } from "../data/use-action-features";
+import { useMapActions } from "../data/use-map-actions";
+import { useMapFeatures } from "../data/use-map-features";
 
 export type MapTool = "pointer" | "polygon" | "point";
-export type MapPanel = "features" | "actions" | "soils" | "parcels";
-
-export const mapPanel: Record<MapPanel, string> = {
-  features: "Features",
-  actions: "Actions",
-  soils: "Soils",
-  parcels: "Parcels",
-};
 
 export type MapMenu = { kind: "feature"; id: string; x: number; y: number } | { kind: "action"; id: number; x: number; y: number };
 
@@ -37,8 +29,6 @@ type MapContextValue = {
   setRightSidebarOpen: (open: boolean) => void;
   tool: MapTool;
   setTool: (tool: MapTool) => void;
-  panel: MapPanel;
-  setPanel: (panel: MapPanel) => void;
   features: GeoJSONStoreFeatures[];
   insertFeature: (feature: GeoJSONStoreFeatures) => void;
   updateFeature: (feature: GeoJSONStoreFeatures) => void;
@@ -93,7 +83,6 @@ export function MapProvider({
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
   const [rightSidebarOpen, setRightSidebarOpenState] = useState(true);
   const [tool, setToolState] = useState<MapTool>("pointer");
-  const [panel, setPanelState] = useState<MapPanel>("features");
   const [linking, setLinkingState] = useState(false);
   const [renameNewFeature, setRenameNewFeature] = useState<string | null>(null);
   const [selectedFeature, setSelectedFeatureState] = useState<string | null>(null);
@@ -119,10 +108,7 @@ export function MapProvider({
     const linkingAction = linking ? selectedAction : null;
     const saved = storeFeature(feature);
     setToolState("pointer");
-    if (linkingAction === null) {
-      setLinkingState(false);
-      setPanelState("features");
-    }
+    if (linkingAction === null) setLinkingState(false);
     setSelectedFeatureState(id);
     setRenameNewFeature(id);
     if (linkingAction !== null) {
@@ -139,7 +125,6 @@ export function MapProvider({
     if (featureToLink !== null) await linkFeature(id, featureToLink);
     setSelectedActionState(id);
     setLinkingState(false);
-    setPanelState("actions");
     setRenameNewAction(id);
   };
 
@@ -180,9 +165,6 @@ export function MapProvider({
   // Any feature selection reveals its details, including reselecting the same feature.
   const setSelectedFeature = (id: string | null) => {
     setSelectedFeatureState(id);
-    if (id !== null) {
-      setPanelState("features");
-    }
   };
 
   // Changes the tool and clears the selection unless the tool is the pointer.
@@ -192,19 +174,13 @@ export function MapProvider({
     if (nextSelected !== selectedFeature) setSelectedFeature(nextSelected);
   };
 
-  // Leaves link mode. The open panel stays whatever the caller sets.
-  const setPanel = (next: MapPanel) => {
-    setPanelState(next);
-    setLinkingState(false);
-  };
-
   // Selects an action and leaves link mode.
   const setSelectedAction = (id: number | null) => {
     setSelectedActionState(id);
     setLinkingState(false);
   };
 
-  // Turns link mode on for the selected action. Clears the feature selection first. The panel does not change.
+  // Turns link mode on for the selected action. Clears the feature selection first.
   const setLinking = (next: boolean) => {
     if (next && selectedAction === null) return;
     if (next) {
@@ -233,8 +209,6 @@ export function MapProvider({
         setRightSidebarOpen,
         tool,
         setTool,
-        panel,
-        setPanel,
         features,
         insertFeature,
         updateFeature,

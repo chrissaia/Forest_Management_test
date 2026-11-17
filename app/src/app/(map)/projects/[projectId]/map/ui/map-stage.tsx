@@ -10,7 +10,7 @@ import type { Map as MapLibreMap } from "maplibre-gl";
 import { Map } from "@/app/components/map/map";
 import { updateMapCamera } from "@/lib/maps/map-actions";
 import { SketchSession } from "../sketch/sketch-session";
-import { installSoilSource } from "./soil-source";
+import { installSoilSource } from "../data/soil-source";
 
 const cameraDelayMs = 500;
 

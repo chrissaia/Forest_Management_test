@@ -6,8 +6,8 @@
  */
 
 import type { GeoJSONStoreFeatures } from "terra-draw";
-import { useMap } from "../../map-context";
-import { FeatureName } from "../feature-name";
+import { useMap } from "../state/map-context";
+import { FeatureName } from "./feature-name";
 
 // A feature row. Press toggles or selects. The X runs the caller's remove.
 export function FeatureListRow({

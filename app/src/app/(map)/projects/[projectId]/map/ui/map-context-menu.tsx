@@ -1,8 +1,14 @@
 "use client";
 
+/*
+ * Right-click and overflow menu for one feature or one action.
+ * Reads MapMenu from map state, portals onto document.body, and closes on an outside press, Escape, resize, or scroll.
+ * Delete is the only item. Action delete waits on the server. Feature delete is queued and does not report failure here.
+ */
+
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { useMap } from "../map-context";
+import { useMap } from "../state/map-context";
 
 export function MapContextMenu() {
   const { contextMenu, setContextMenu, deleteAction, deleteFeature } = useMap();

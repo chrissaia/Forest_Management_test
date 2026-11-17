@@ -3,11 +3,11 @@
 /*
  * Select, polygon, and point tools.
  * The thumb slides to the selected tool.
- * Hover or focus shows the name and shortcut under the button.
+ * Hover or focus shows the name and shortcut above the button.
  */
 
 import { useEffect, useRef, useState } from "react";
-import { useMap } from "../map-context";
+import { useMap } from "../state/map-context";
 
 const tools = [
   {
@@ -43,7 +43,7 @@ const tipBridgeMs = 80;
 const tipEase = "cubic-bezier(0.23, 1, 0.32, 1)";
 
 const toolbarMaterial =
-  "absolute top-2 left-1/2 z-20 -translate-x-1/2 bg-surface-canvas shadow-sm border border-border-map";
+  "absolute bottom-2 left-1/2 z-20 -translate-x-1/2 bg-surface-canvas shadow-sm border border-border-map";
 
 type ToolId = (typeof tools)[number]["id"] | "actions" | "features" | "details";
 type Tip = { id: ToolId; animate: boolean };
@@ -121,6 +121,7 @@ export function MapToolbar() {
                 label={item.label}
                 shortcut={item.shortcut}
                 animate={tip.current.animate}
+                place="above"
               />
             ) : null}
           </button>
@@ -200,14 +201,16 @@ export function useToolTip() {
   };
 }
 
-// Name and shortcut, centered under the tool button.
+// Name and shortcut, centered on the control.
 export function ToolTip({
   label,
   shortcut,
   animate,
   align = "center",
+  place = "below",
 }: {
   align?: "center" | "right" | "left";
+  place?: "above" | "below";
   label: string;
   shortcut: string;
   animate: boolean;
@@ -226,7 +229,7 @@ export function ToolTip({
   return (
     <span
       role="tooltip"
-      className="pointer-events-none absolute top-full left-1/2 z-30 mt-1 flex items-center gap-2 rounded-[6px] bg-white px-2 py-[3px] text-[11px] leading-4 font-medium whitespace-nowrap text-text-primary shadow-[0_2px_6px_rgb(0_0_0/0.35)]"
+      className={`pointer-events-none absolute left-1/2 z-30 flex items-center gap-2 rounded-[6px] bg-white px-2 py-[3px] text-[11px] leading-4 font-medium whitespace-nowrap text-text-primary shadow-[0_2px_6px_rgb(0_0_0/0.35)] ${place === "above" ? "bottom-full mb-1" : "top-full mt-1"}`}
       style={{
         left: align === "right" ? "auto" : align === "left" ? 0 : "50%",
         right: align === "right" ? 0 : "auto",

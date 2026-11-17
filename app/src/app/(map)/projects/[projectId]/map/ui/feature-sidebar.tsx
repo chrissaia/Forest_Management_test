@@ -1,14 +1,13 @@
 "use client";
 
-import { useMap } from "../map-context";
-import { FeatureDetails } from "./panels/feature-details";
-import { panelViews } from "./panels/panel-views";
-import { useSidebarWidth } from "./use-sidebar-width";
+import { useMap } from "../state/map-context";
+import { FeatureDetails } from "./feature-details";
+import { useSidebarWidth } from "../state/use-sidebar-width";
 
 // Feature details sit to the left of the anchored actions sidebar.
 export function FeatureSidebar() {
-  const { selectedFeature, featureDetailsOpen, panel, selectedAction, linking, rightSidebarOpen } = useMap();
-  const actionsOpen = rightSidebarOpen && panelViews[panel].detailsOpen({ feature: selectedFeature, action: selectedAction, linking });
+  const { selectedFeature, featureDetailsOpen, rightSidebarOpen } = useMap();
+  const actionsOpen = rightSidebarOpen;
   const open = selectedFeature !== null && featureDetailsOpen;
   const { asideRef, width, minWidth, onPointerDown, onPointerMove, onPointerUp } =
     useSidebarWidth("feature-details-sidebar-width", "end", open, "--map-feature-width");

@@ -7,7 +7,7 @@
  */
 
 import { useEffect, useRef } from "react";
-import { useMap, type MapTool } from "../map-context";
+import { useMap, type MapTool } from "./map-context";
 import { isTypingTarget } from "../sketch/events/keyboard";
 
 // The tool for a lowercase shortcut, or null for every other key.

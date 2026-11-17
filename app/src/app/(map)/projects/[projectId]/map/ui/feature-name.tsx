@@ -9,7 +9,7 @@ import { useEffect, useRef, useState } from "react";
 import type { GeoJSONStoreFeatures } from "terra-draw";
 import { SentenceField } from "@/app/components/texts/sentence-field";
 import type { TextFieldChange } from "@/app/components/texts/text-field-change";
-import { useMap } from "../map-context";
+import { useMap } from "../state/map-context";
 
 // Figma's layer rename: one 24px box. A transparent border keeps the text still.
 const sidebarNameClassName =

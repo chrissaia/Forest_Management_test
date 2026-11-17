@@ -21,7 +21,7 @@ import {
   replaceFromServer,
   savedFeature,
   type FeatureChange,
-} from "./shell/feature-list";
+} from "../logic/feature-list";
 
 // Holds the polygon list and queues one row write after each finished change.
 export function useMapFeatures(

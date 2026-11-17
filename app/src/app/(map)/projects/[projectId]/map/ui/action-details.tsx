@@ -8,7 +8,7 @@
 import { ParagraphField } from "@/app/components/texts/paragraph-field";
 import { SentenceField } from "@/app/components/texts/sentence-field";
 import type { TextFieldChange } from "@/app/components/texts/text-field-change";
-import { useMap } from "../../map-context";
+import { useMap } from "../state/map-context";
 import { FeatureListRow } from "./feature-list-row";
 
 const headerButtonClass =

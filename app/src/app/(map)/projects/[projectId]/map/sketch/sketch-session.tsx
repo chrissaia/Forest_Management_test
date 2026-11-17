@@ -18,7 +18,7 @@ import {
   type TerraDrawMouseEvent,
 } from "terra-draw";
 import { TerraDrawMapLibreGLAdapter } from "terra-draw-maplibre-gl-adapter";
-import { useMap, type MapTool } from "../map-context";
+import { useMap, type MapTool } from "../state/map-context";
 import type { LngLat, ScreenPoint } from "./kinds/polygon/constraints";
 import {
   createdFeature,
